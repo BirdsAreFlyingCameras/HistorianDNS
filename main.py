@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 import requests
-import pprint as pp
 import re
 
 URL = 'bird.org'
@@ -72,6 +71,7 @@ def SOA(URL):
 
         for i in range(len(SOARecordList)):
             SOARecordStr = str(SOARecordList[i])
+            SOARecordStr = SOARecordStr.replace('-&gt;', '->')
 
             print(SOARecordStr)
 
@@ -80,7 +80,7 @@ def SOA(URL):
     OutputData()
 
 
-def NS():
+def NS(URL):
     def GetData():
 
         print('GetData')
@@ -107,7 +107,7 @@ def NS():
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
                                  ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Request = requests.get('https://dnshistory.org/historical-dns-records/ns/dnshistory.org', headers=headers)
+        Request = requests.get(f'https://dnshistory.org/historical-dns-records/ns/{URL}', headers=headers)
 
         Response = Request.text
 
@@ -164,6 +164,8 @@ def NS():
 
             i = i.replace(LinkRemove, '')
 
+            i = i.replace('-&gt;', '->')
+
             NSList.append(str(i))
 
         for i in NSList:
@@ -177,7 +179,7 @@ def NS():
     OutputData()
 
 
-def MX():
+def MX(URL):
     def GetData():
 
         global DateRegex, TagP, Replace, tags
@@ -201,7 +203,7 @@ def MX():
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
                                  ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Request = requests.get('https://dnshistory.org/historical-dns-records/mx/dnshistory.org', headers=headers)
+        Request = requests.get(f'https://dnshistory.org/historical-dns-records/mx/{URL}', headers=headers)
 
         Response = Request.text
 
@@ -256,6 +258,8 @@ def MX():
 
             i = i.replace(LinkRemove, '')
 
+            i = i.replace('-&gt;', '->')
+
             MXList.append(str(i))
 
         for i in MXList:
@@ -268,7 +272,7 @@ def MX():
     OutputData()
 
 
-def A():
+def A(URL):
     def GetData():
 
         global DateRegex, TagP, Replace, tags
@@ -292,7 +296,7 @@ def A():
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
                                  ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Request = requests.get('https://dnshistory.org/historical-dns-records/a/dnshistory.org', headers=headers)
+        Request = requests.get(f'https://dnshistory.org/historical-dns-records/a/{URL}', headers=headers)
 
         Response = Request.text
 
@@ -313,6 +317,7 @@ def A():
 
         for i in Replace:
             TagP = str(TagP).replace(i, '')
+
 
         x = TagP.splitlines()
 
@@ -347,6 +352,9 @@ def A():
 
             i = i.replace(LinkRemove, '')
 
+            i = i.replace('-&gt;', '->')
+
+
             AList.append(str(i))
 
         for i in AList:
@@ -360,7 +368,7 @@ def A():
     OutputData()
 
 
-def AAAA():
+def AAAA(URL):
     def GetData():
 
         global DateRegex, TagP, Replace, tags
@@ -384,7 +392,7 @@ def AAAA():
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
                                  ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Request = requests.get('https://dnshistory.org/historical-dns-records/aaaa/dnshistory.org', headers=headers)
+        Request = requests.get(f'https://dnshistory.org/historical-dns-records/aaaa/{URL}', headers=headers)
 
         Response = Request.text
 
@@ -476,7 +484,7 @@ def TXT(URL):
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
                                  ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Request = requests.get('https://dnshistory.org/historical-dns-records/txt/dnshistory.org', headers=headers)
+        Request = requests.get(f'https://dnshistory.org/historical-dns-records/txt/{URL}', headers=headers)
 
         Response = Request.text
 
@@ -518,6 +526,7 @@ def TXT(URL):
 
         for i in range(len(TXTRecordList)):
             TXTRecordStr = str(TXTRecordList[i])
+            TXTRecordStr = TXTRecordStr.replace('-&gt;', '->')
 
             print(TXTRecordStr)
 
