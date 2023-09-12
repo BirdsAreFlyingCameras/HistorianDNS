@@ -1,4 +1,4 @@
-#HistorianDNS
+# HistorianDNS
 
 Version Number: Beta 0.1
 
@@ -19,4 +19,4 @@ Libraries used:
   BeautifulSoup, requests, re
   
 
-***Not A Bird | CEO of Bird Inc. is my spelling correct?
+***Not A Bird | CEO of Bird Inc.***
