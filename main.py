@@ -1,542 +1,608 @@
 from bs4 import BeautifulSoup
 import requests
 import re
+import os
+
+
 
 URL = 'bird.org'
 
-def SOA(URL):
-    def GetData():
 
-        global DateRegex, TagP, Replace, tags
+def main(URL):
 
-        DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
-        tags = [
-            "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
-            "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
-            "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
-            "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
-            "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
-            "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
-            "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
-            "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
-            "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
-            "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
-            "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
-            "wbr"
-        ]
+    if os.path.exists(f'{URL}'):
+        pass
+    else:
+        os.mkdir(f'{URL}')
 
-        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                                 ' Chrome/90.0.4430.212 Safari/537.36'}
+    os.chdir(f'{URL}')
+    def SOA(URL):
+        def GetData():
 
-        Request = requests.get(f'https://dnshistory.org/historical-dns-records/soa/{URL}', headers=headers)
+            global DateRegex, TagP, Replace, tags
 
-        Response = Request.text
+            DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
+            tags = [
+                "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
+                "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
+                "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
+                "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
+                "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
+                "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
+                "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
+                "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
+                "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
+                "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
+                "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
+                "wbr"
+            ]
 
-        soup = BeautifulSoup(Response, 'html.parser')
+            headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                                     ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        TagP = (soup.find_all('p'))
+            Request = requests.get(f'https://dnshistory.org/historical-dns-records/soa/{URL}', headers=headers)
 
-        Replace = ['[', ']', "'"]
-    def FilterData():
+            Response = Request.text
 
-        global SOARecordList, TagP
+            soup = BeautifulSoup(Response, 'html.parser')
 
-        for i in tags:
-            Replace.append(f'<{i}>')
-            Replace.append(f'</{i}>')
-            Replace.append(f'<{i}/>')
+            TagP = (soup.find_all('p'))
 
-        for i in Replace:
-            TagP = str(TagP).replace(i, '')
-        DateFind = re.findall(DateRegex, TagP)
+            Replace = ['[', ']', "'"]
+        def FilterData():
 
-        Indexs = []
+            global SOARecordList, TagP
 
-        for i in list(DateFind):
-            Indexs.append(TagP.index(i))
-        SOARecordList = []
+            for i in tags:
+                Replace.append(f'<{i}>')
+                Replace.append(f'</{i}>')
+                Replace.append(f'<{i}/>')
 
+            for i in Replace:
+                TagP = str(TagP).replace(i, '')
+            DateFind = re.findall(DateRegex, TagP)
 
-        for x in range(len(Indexs)-1):
-            I1 = Indexs[0]
-            I2 = Indexs[1]
-            SOARecordList.append(TagP[I1:I2])
-            Indexs.pop(0)
+            Indexs = []
 
-        LastIndex = Indexs[-1]
-        End = TagP.rfind('\n')
-        SOARecordList.append(TagP[LastIndex:End])
-    def OutputData():
-
-        for i in range(len(SOARecordList)):
-            SOARecordStr = str(SOARecordList[i])
-            SOARecordStr = SOARecordStr.replace('-&gt;', '->')
-
-            print(SOARecordStr)
-
-    GetData()
-    FilterData()
-    OutputData()
+            for i in list(DateFind):
+                Indexs.append(TagP.index(i))
+            SOARecordList = []
 
 
-def NS(URL):
-    def GetData():
+            for x in range(len(Indexs)-1):
+                I1 = Indexs[0]
+                I2 = Indexs[1]
+                SOARecordList.append(TagP[I1:I2])
+                Indexs.pop(0)
 
-        print('GetData')
+            LastIndex = Indexs[-1]
+            End = TagP.rfind('\n')
+            SOARecordList.append(TagP[LastIndex:End])
+        def OutputData():
 
-        global DateRegex, TagP, Replace, tags
+            for i in range(len(SOARecordList)):
+                SOARecordStr = str(SOARecordList[i])
+                SOARecordStr = SOARecordStr.replace('-&gt;', '->')
 
-        DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
+                print(SOARecordStr)
 
-        tags = [
-            "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
-            "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
-            "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
-            "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
-            "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
-            "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
-            "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
-            "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
-            "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
-            "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
-            "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
-            "wbr"
-        ]
 
-        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                                 ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Request = requests.get(f'https://dnshistory.org/historical-dns-records/ns/{URL}', headers=headers)
+                if os.path.exists('SOA.txt'):
+                    with open('SOA.txt', 'a') as f:
+                        f.write(SOARecordStr + '\n')
+                else:
+                    with open('SOA.txt', 'x') as f:
+                        f.write(SOARecordStr + '\n')
 
-        Response = Request.text
 
-        soup = BeautifulSoup(Response, 'html.parser')
 
-        TagP = (soup.find_all('p'))
 
-        Replace = ['[', ']', "'"]
+        GetData()
+        FilterData()
+        OutputData()
 
-    def FilterData():
 
-        print('FilterData')
+    def NS(URL):
+        def GetData():
 
-        global Lines, NSList, NSRLinksList, TagP
+            global DateRegex, TagP, Replace, tags
 
-        for i in tags:
-            Replace.append(f'<{i}>')
-            Replace.append(f'</{i}>')
-            Replace.append(f'<{i}/>')
+            DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
 
-        for i in Replace:
-            TagP = str(TagP).replace(i, '')
+            tags = [
+                "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
+                "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
+                "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
+                "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
+                "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
+                "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
+                "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
+                "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
+                "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
+                "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
+                "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
+                "wbr"
+            ]
 
-        x = TagP.splitlines()
+            headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                                     ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Lines = []
+            Request = requests.get(f'https://dnshistory.org/historical-dns-records/ns/{URL}', headers=headers)
 
-        for i in range(len(x)):
+            Response = Request.text
 
-            if re.findall(DateRegex, x[i]):
-                Lines.append(x[i])
+            soup = BeautifulSoup(Response, 'html.parser')
+
+            TagP = (soup.find_all('p'))
+
+            Replace = ['[', ']', "'"]
+
+        def FilterData():
+
+            global Lines, NSList, NSRLinksList, TagP
+
+            for i in tags:
+                Replace.append(f'<{i}>')
+                Replace.append(f'</{i}>')
+                Replace.append(f'<{i}/>')
+
+            for i in Replace:
+                TagP = str(TagP).replace(i, '')
+
+            x = TagP.splitlines()
+
+            Lines = []
+
+            for i in range(len(x)):
+
+                if re.findall(DateRegex, x[i]):
+                    Lines.append(x[i])
+                else:
+                    pass
+
+            NSList = []
+            NSRLinksList = []
+
+        def OutputData():
+
+            global NSList, NSRLinksList
+
+            for i in Lines:
+                Index1 = (i.find('href='))
+                Index2 = (i.find('>'))
+
+                RLink = i[Index1 + 6:Index2 - 2]
+
+                NSRLinksList.append(RLink)
+
+                Index1 = (i.find('<'))
+                Index2 = (i.find('>'))
+
+                LinkRemove = i[Index1:Index2 + 1]
+
+                i = i.replace(LinkRemove, '')
+
+                i = i.replace('-&gt;', '->')
+
+                NSList.append(str(i))
+
+            for i in NSList:
+                print(i)
+
+            #for i in NSRLinksList:
+            #    print(i)
+
+
+            if os.path.exists('NS.txt'):
+                with open('NS.txt', 'a') as f:
+                    for i in NSList:
+                        f.write(i + '\n')
             else:
-                pass
+                with open('NS.txt', 'x') as f:
+                    for i in NSList:
+                        f.write(i + '\n')
 
-        NSList = []
-        NSRLinksList = []
-
-    def OutputData():
-
-        print('OutputData')
-
-        for i in Lines:
-            Index1 = (i.find('href='))
-            Index2 = (i.find('>'))
-
-            RLink = i[Index1 + 6:Index2 - 2]
-
-            NSRLinksList.append(RLink)
-
-            Index1 = (i.find('<'))
-            Index2 = (i.find('>'))
-
-            LinkRemove = i[Index1:Index2 + 1]
-
-            i = i.replace(LinkRemove, '')
-
-            i = i.replace('-&gt;', '->')
-
-            NSList.append(str(i))
-
-        for i in NSList:
-            print(i)
-
-        for i in NSRLinksList:
-            print(i)
-
-    GetData()
-    FilterData()
-    OutputData()
+        GetData()
+        FilterData()
+        OutputData()
 
 
-def MX(URL):
-    def GetData():
+    def MX(URL):
+        def GetData():
 
-        global DateRegex, TagP, Replace, tags
+            global DateRegex, TagP, Replace, tags
 
-        DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
-        tags = [
-            "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
-            "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
-            "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
-            "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
-            "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
-            "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
-            "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
-            "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
-            "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
-            "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
-            "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
-            "wbr"
-        ]
+            DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
+            tags = [
+                "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
+                "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
+                "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
+                "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
+                "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
+                "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
+                "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
+                "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
+                "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
+                "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
+                "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
+                "wbr"
+            ]
 
-        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                                 ' Chrome/90.0.4430.212 Safari/537.36'}
+            headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                                     ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Request = requests.get(f'https://dnshistory.org/historical-dns-records/mx/{URL}', headers=headers)
+            Request = requests.get(f'https://dnshistory.org/historical-dns-records/mx/{URL}', headers=headers)
 
-        Response = Request.text
+            Response = Request.text
 
-        soup = BeautifulSoup(Response, 'html.parser')
+            soup = BeautifulSoup(Response, 'html.parser')
 
-        TagP = (soup.find_all('p'))
+            TagP = (soup.find_all('p'))
 
-        Replace = ['[', ']', "'"]
+            Replace = ['[', ']', "'"]
 
-    def FilterData():
+        def FilterData():
 
-        global Lines, MXList, MXRLinksList, TagP
+            global Lines, MXList, MXRLinksList, TagP
 
-        for i in tags:
-            Replace.append(f'<{i}>')
-            Replace.append(f'</{i}>')
-            Replace.append(f'<{i}/>')
+            for i in tags:
+                Replace.append(f'<{i}>')
+                Replace.append(f'</{i}>')
+                Replace.append(f'<{i}/>')
 
-        for i in Replace:
-            TagP = str(TagP).replace(i, '')
+            for i in Replace:
+                TagP = str(TagP).replace(i, '')
 
-        x = TagP.splitlines()
+            x = TagP.splitlines()
 
-        Lines = []
+            Lines = []
 
-        for i in range(len(x)):
+            for i in range(len(x)):
 
-            if re.findall(DateRegex, x[i]):
+                if re.findall(DateRegex, x[i]):
 
-                Lines.append(x[i])
+                    Lines.append(x[i])
 
+                else:
+                    pass
+
+                MXList = []
+                MXRLinksList = []
+
+        def OutputData():
+
+            for i in Lines:
+                Index1 = (i.find('href='))
+                Index2 = (i.find('>'))
+
+                RLink = i[Index1 + 6:Index2 - 2]
+
+                MXRLinksList.append(RLink)
+
+                Index1 = (i.find('<'))
+                Index2 = (i.find('>'))
+
+                LinkRemove = i[Index1:Index2 + 1]
+
+                i = i.replace(LinkRemove, '')
+
+                i = i.replace('-&gt;', '->')
+
+                MXList.append(str(i))
+
+            for i in MXList:
+                print(i)
+            #for i in MXRLinksList:
+            #    print(i)
+
+            if os.path.exists('MX.txt'):
+                with open('MX.txt', 'a') as f:
+                    for i in MXList:
+                        f.write(i + '\n')
             else:
-                pass
-
-            MXList = []
-            MXRLinksList = []
-
-    def OutputData():
-
-        for i in Lines:
-            Index1 = (i.find('href='))
-            Index2 = (i.find('>'))
-
-            RLink = i[Index1 + 6:Index2 - 2]
-
-            MXRLinksList.append(RLink)
-
-            Index1 = (i.find('<'))
-            Index2 = (i.find('>'))
-
-            LinkRemove = i[Index1:Index2 + 1]
-
-            i = i.replace(LinkRemove, '')
-
-            i = i.replace('-&gt;', '->')
-
-            MXList.append(str(i))
-
-        for i in MXList:
-            print(i)
-        for i in MXRLinksList:
-            print(i)
-
-    GetData()
-    FilterData()
-    OutputData()
+                with open('MX.txt', 'x') as f:
+                    for i in MXList:
+                        f.write(i + '\n')
 
 
-def A(URL):
-    def GetData():
-
-        global DateRegex, TagP, Replace, tags
-
-        DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
-        tags = [
-            "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
-            "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
-            "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
-            "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
-            "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
-            "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
-            "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
-            "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
-            "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
-            "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
-            "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
-            "wbr"
-        ]
-
-        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                                 ' Chrome/90.0.4430.212 Safari/537.36'}
-
-        Request = requests.get(f'https://dnshistory.org/historical-dns-records/a/{URL}', headers=headers)
-
-        Response = Request.text
-
-        soup = BeautifulSoup(Response, 'html.parser')
-
-        TagP = (soup.find_all('p'))
-
-        Replace = ['[', ']', "'"]
-
-    def FilterData():
-
-        global Lines, AList, ARLinksList, TagP
-
-        for i in tags:
-            Replace.append(f'<{i}>')
-            Replace.append(f'</{i}>')
-            Replace.append(f'<{i}/>')
-
-        for i in Replace:
-            TagP = str(TagP).replace(i, '')
+        GetData()
+        FilterData()
+        OutputData()
 
 
-        x = TagP.splitlines()
+    def A(URL):
+        def GetData():
 
-        Lines = []
+            global DateRegex, TagP, Replace, tags
 
-        for i in range(len(x)):
+            DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
+            tags = [
+                "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
+                "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
+                "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
+                "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
+                "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
+                "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
+                "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
+                "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
+                "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
+                "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
+                "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
+                "wbr"
+            ]
 
-            if re.findall(DateRegex, x[i]):
+            headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                                     ' Chrome/90.0.4430.212 Safari/537.36'}
 
-                Lines.append(x[i])
+            Request = requests.get(f'https://dnshistory.org/historical-dns-records/a/{URL}', headers=headers)
 
+            Response = Request.text
+
+            soup = BeautifulSoup(Response, 'html.parser')
+
+            TagP = (soup.find_all('p'))
+
+            Replace = ['[', ']', "'"]
+
+        def FilterData():
+
+            global Lines, AList, ARLinksList, TagP
+
+            for i in tags:
+                Replace.append(f'<{i}>')
+                Replace.append(f'</{i}>')
+                Replace.append(f'<{i}/>')
+
+            for i in Replace:
+                TagP = str(TagP).replace(i, '')
+
+
+            x = TagP.splitlines()
+
+            Lines = []
+
+            for i in range(len(x)):
+
+                if re.findall(DateRegex, x[i]):
+
+                    Lines.append(x[i])
+
+                else:
+                    pass
+
+                AList = []
+                ARLinksList = []
+
+        def OutputData():
+
+            for i in Lines:
+                Index1 = (i.find('href='))
+                Index2 = (i.find('>'))
+
+                RLink = i[Index1 + 6:Index2 - 2]
+
+                ARLinksList.append(RLink)
+
+                Index1 = (i.find('<'))
+                Index2 = (i.find('>'))
+
+                LinkRemove = i[Index1:Index2 + 1]
+
+                i = i.replace(LinkRemove, '')
+
+                i = i.replace('-&gt;', '->')
+
+
+                AList.append(str(i))
+
+            for i in AList:
+                print(i)
+
+            #for i in ARLinksList:
+            #    print(i)
+
+            if os.path.exists('A.txt'):
+                with open('A.txt', 'a') as f:
+                    for i in AList:
+                        f.write(i + '\n')
             else:
-                pass
+                with open('A.txt', 'x') as f:
+                    for i in AList:
+                        f.write(i + '\n')
 
-            AList = []
-            ARLinksList = []
 
-    def OutputData():
+        GetData()
+        FilterData()
+        OutputData()
 
-        for i in Lines:
-            Index1 = (i.find('href='))
-            Index2 = (i.find('>'))
+    def AAAA(URL):
+        def GetData():
 
-            RLink = i[Index1 + 6:Index2 - 2]
+            global DateRegex, TagP, Replace, tags
 
-            ARLinksList.append(RLink)
+            DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
+            tags = [
+                "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
+                "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
+                "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
+                "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
+                "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
+                "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
+                "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
+                "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
+                "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
+                "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
+                "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
+                "wbr"
+            ]
 
-            Index1 = (i.find('<'))
-            Index2 = (i.find('>'))
+            headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                                     ' Chrome/90.0.4430.212 Safari/537.36'}
 
-            LinkRemove = i[Index1:Index2 + 1]
+            Request = requests.get(f'https://dnshistory.org/historical-dns-records/aaaa/{URL}', headers=headers)
 
-            i = i.replace(LinkRemove, '')
+            Response = Request.text
 
-            i = i.replace('-&gt;', '->')
+            soup = BeautifulSoup(Response, 'html.parser')
 
+            TagP = (soup.find_all('p'))
 
-            AList.append(str(i))
+            Replace = ['[', ']', "'"]
 
-        for i in AList:
-            print(i)
+        def FilterData():
 
-        for i in ARLinksList:
-            print(i)
+            global Lines, AAAAList, AAAARLinksList, TagP
 
-    GetData()
-    FilterData()
-    OutputData()
+            for i in tags:
+                Replace.append(f'<{i}>')
+                Replace.append(f'</{i}>')
+                Replace.append(f'<{i}/>')
 
+            for i in Replace:
+                TagP = str(TagP).replace(i, '')
 
-def AAAA(URL):
-    def GetData():
+            x = TagP.splitlines()
 
-        global DateRegex, TagP, Replace, tags
+            Lines = []
 
-        DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
-        tags = [
-            "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
-            "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
-            "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
-            "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
-            "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
-            "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
-            "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
-            "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
-            "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
-            "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
-            "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
-            "wbr"
-        ]
+            for i in range(len(x)):
 
-        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                                 ' Chrome/90.0.4430.212 Safari/537.36'}
+                if re.findall(DateRegex, x[i]):
 
-        Request = requests.get(f'https://dnshistory.org/historical-dns-records/aaaa/{URL}', headers=headers)
+                    Lines.append(x[i])
 
-        Response = Request.text
+                else:
+                    pass
 
-        soup = BeautifulSoup(Response, 'html.parser')
+                AAAAList = []
+                AAAARLinksList = []
 
-        TagP = (soup.find_all('p'))
+        def OutputData():
 
-        Replace = ['[', ']', "'"]
+            for i in Lines:
+                Index1 = (i.find('href='))
+                Index2 = (i.find('>'))
 
-    def FilterData():
+                RLink = i[Index1 + 6:Index2 - 2]
 
-        global Lines, AAAAList, AAAARLinksList, TagP
+                AAAARLinksList.append(RLink)
 
-        for i in tags:
-            Replace.append(f'<{i}>')
-            Replace.append(f'</{i}>')
-            Replace.append(f'<{i}/>')
+                Index1 = (i.find('<'))
+                Index2 = (i.find('>'))
 
-        for i in Replace:
-            TagP = str(TagP).replace(i, '')
+                LinkRemove = i[Index1:Index2 + 1]
 
-        x = TagP.splitlines()
+                i = i.replace(LinkRemove, '')
 
-        Lines = []
+                AAAAList.append(str(i))
 
-        for i in range(len(x)):
+            for i in AAAAList:
+                print(i)
 
-            if re.findall(DateRegex, x[i]):
+            #for i in AAAARLinksList:
+            #    print(i)
 
-                Lines.append(x[i])
 
-            else:
-                pass
+            if os.path.exists('AAAA.txt'):
+                with open('AAAA.txt', 'a') as f:
+                    for i in AAAAList:
+                        f.write(i + '\n')
 
-            AAAAList = []
-            AAAARLinksList = []
+        GetData()
+        FilterData()
+        OutputData()
 
-    def OutputData():
 
-        for i in Lines:
-            Index1 = (i.find('href='))
-            Index2 = (i.find('>'))
+    def TXT(URL):
+        def GetData():
 
-            RLink = i[Index1 + 6:Index2 - 2]
+            global DateRegex, TagP, Replace, tags
 
-            AAAARLinksList.append(RLink)
+            DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
+            tags = [
+                "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
+                "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
+                "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
+                "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
+                "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
+                "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
+                "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
+                "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
+                "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
+                "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
+                "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
+                "wbr"
+            ]
 
-            Index1 = (i.find('<'))
-            Index2 = (i.find('>'))
+            headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                                     ' Chrome/90.0.4430.212 Safari/537.36'}
 
-            LinkRemove = i[Index1:Index2 + 1]
+            Request = requests.get(f'https://dnshistory.org/historical-dns-records/txt/{URL}', headers=headers)
 
-            i = i.replace(LinkRemove, '')
+            Response = Request.text
 
-            AAAAList.append(str(i))
+            soup = BeautifulSoup(Response, 'html.parser')
 
-        for i in AAAAList:
-            print(i)
+            TagP = (soup.find_all('p'))
 
-        for i in AAAARLinksList:
-            print(i)
+            Replace = ['[', ']', "'"]
 
-    GetData()
-    FilterData()
-    OutputData()
+        def FilterData():
 
+            global TXTRecordList, TagP
 
-def TXT(URL):
-    def GetData():
+            for i in tags:
+                Replace.append(f'<{i}>')
+                Replace.append(f'</{i}>')
+                Replace.append(f'<{i}/>')
 
-        global DateRegex, TagP, Replace, tags
+            for i in Replace:
+                TagP = str(TagP).replace(i, '')
+            DateFind = re.findall(DateRegex, TagP)
 
-        DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
-        tags = [
-            "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
-            "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
-            "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog",
-            "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "footer",
-            "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "html",
-            "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link",
-            "main", "map", "mark", "menu", "meta", "meter", "nav", "noscript", "object",
-            "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress",
-            "q", "rp", "rt", "ruby", "s", "samp", "section", "select", "slot", "small", "source",
-            "span", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea",
-            "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
-            "wbr"
-        ]
+            Indexs = []
 
-        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                                 ' Chrome/90.0.4430.212 Safari/537.36'}
+            for i in list(DateFind):
+                Indexs.append(TagP.index(i))
+            TXTRecordList = []
 
-        Request = requests.get(f'https://dnshistory.org/historical-dns-records/txt/{URL}', headers=headers)
+            for x in range(len(Indexs) - 1):
+                I1 = Indexs[0]
+                I2 = Indexs[1]
+                TXTRecordList.append(TagP[I1:I2])
+                Indexs.pop(0)
 
-        Response = Request.text
+            LastIndex = Indexs[-1]
+            End = TagP.rfind('\n')
+            TXTRecordList.append(TagP[LastIndex:End])
+        def OutputData():
 
-        soup = BeautifulSoup(Response, 'html.parser')
+            for i in range(len(TXTRecordList)):
+                TXTRecordStr = str(TXTRecordList[i])
+                TXTRecordStr = TXTRecordStr.replace('-&gt;', '->')
+                print(TXTRecordStr)
 
-        TagP = (soup.find_all('p'))
+                if os.path.exists('TXT.txt'):
+                    with open('TXT.txt', 'a') as f:
+                        f.write(TXTRecordStr + '\n')
+                else:
+                    with open('TXT.txt', 'x') as f:
+                        f.write(TXTRecordStr + '\n')
 
-        Replace = ['[', ']', "'"]
+        GetData()
+        FilterData()
+        OutputData()
 
-    def FilterData():
+    SOA(URL)
+    NS(URL)
+    MX(URL)
+    A(URL)
+    AAAA(URL)
+    TXT(URL)
 
-        global TXTRecordList, TagP
-
-        for i in tags:
-            Replace.append(f'<{i}>')
-            Replace.append(f'</{i}>')
-            Replace.append(f'<{i}/>')
-
-        for i in Replace:
-            TagP = str(TagP).replace(i, '')
-        DateFind = re.findall(DateRegex, TagP)
-
-        Indexs = []
-
-        for i in list(DateFind):
-            Indexs.append(TagP.index(i))
-        TXTRecordList = []
-
-        for x in range(len(Indexs) - 1):
-            I1 = Indexs[0]
-            I2 = Indexs[1]
-            TXTRecordList.append(TagP[I1:I2])
-            Indexs.pop(0)
-
-        LastIndex = Indexs[-1]
-        End = TagP.rfind('\n')
-        TXTRecordList.append(TagP[LastIndex:End])
-    def OutputData():
-
-        for i in range(len(TXTRecordList)):
-            TXTRecordStr = str(TXTRecordList[i])
-            TXTRecordStr = TXTRecordStr.replace('-&gt;', '->')
-
-            print(TXTRecordStr)
-
-    GetData()
-    FilterData()
-    OutputData()
-
-
-TXT(URL)
-
-# SOA()
+if __name__ == "__main__":
+    main(URL)
 
 
 # Dev State
