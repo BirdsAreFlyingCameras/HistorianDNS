@@ -5,8 +5,20 @@ import os
 
 
 
-URL = 'bird.org'
+URL = input('Enter URL: ')
 
+
+if URL.startswith('http://'):
+    URL = URL.replace('http://', '')
+elif URL.startswith('https://'):
+    URL = URL.replace('https://', '')
+else:
+    pass
+
+if URL.endswith('/'):
+    URL = URL.replace('/', '')
+else:
+    pass
 
 def main(URL):
 
@@ -509,6 +521,10 @@ def main(URL):
                     for i in AAAAList:
                         f.write(i + '\n')
 
+            else:
+                with open('AAAA.txt', 'x') as f:
+                    for i in AAAAList:
+                        f.write(i + '\n')
         GetData()
         FilterData()
         OutputData()
