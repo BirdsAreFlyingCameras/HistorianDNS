@@ -52,22 +52,18 @@ def SOA(URL):
             TagP = str(TagP).replace(i, '')
         DateFind = re.findall(DateRegex, TagP)
 
-        print(DateFind)
-
         Indexs = []
 
         for i in list(DateFind):
             Indexs.append(TagP.index(i))
         SOARecordList = []
-        IndexForSplit = iter(Indexs)
 
-        for Even, Odd in zip(IndexForSplit, IndexForSplit):
-            SOARecordList.append(TagP[Even:Odd])
 
-        LastIndex = Indexs[-1]
-        End = TagP.rfind('\n')
-
-        SOARecordList.append(TagP[LastIndex:End])
+        for x in range(len(Indexs)-1):
+            I1 = Indexs[0]
+            I2 = Indexs[1]
+            SOARecordList.append(TagP[I1:I2])
+            Indexs.pop(0)
 
         LastIndex = Indexs[-1]
         End = TagP.rfind('\n')
@@ -456,7 +452,7 @@ def AAAA():
     OutputData()
 
 
-def TXT():
+def TXT(URL):
     def GetData():
 
         global DateRegex, TagP, Replace, tags
@@ -508,15 +504,16 @@ def TXT():
         for i in list(DateFind):
             Indexs.append(TagP.index(i))
         TXTRecordList = []
-        IndexForSplit = iter(Indexs)
 
-        for Even, Odd in zip(IndexForSplit, IndexForSplit):
-            TXTRecordList.append(TagP[Even:Odd])
+        for x in range(len(Indexs) - 1):
+            I1 = Indexs[0]
+            I2 = Indexs[1]
+            TXTRecordList.append(TagP[I1:I2])
+            Indexs.pop(0)
 
         LastIndex = Indexs[-1]
         End = TagP.rfind('\n')
         TXTRecordList.append(TagP[LastIndex:End])
-
     def OutputData():
 
         for i in range(len(TXTRecordList)):
@@ -529,7 +526,7 @@ def TXT():
     OutputData()
 
 
-SOA(URL)
+TXT(URL)
 
 # SOA()
 
