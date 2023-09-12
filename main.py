@@ -7,11 +7,6 @@ import re
 def SOA():
 
     DateRegex = r"\d{4}-\d{2}-\d{2} -&gt; \d{4}-\d{2}-\d{2}"
-    SerialRegex = r"Serial:\s*(\d+)"
-
-    ToBeFiltered = []
-    Filtered = []
-
     tags = [
         "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
         "bdo", "blockquote", "body", "br", "button", "canvas", "caption", "cite", "code",
