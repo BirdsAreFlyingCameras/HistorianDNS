@@ -4,7 +4,6 @@ import re
 
 URL = 'bird.org'
 
-
 def SOA(URL):
     def GetData():
 
