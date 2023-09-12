@@ -3,8 +3,10 @@ import requests
 import pprint as pp
 import re
 
+URL = 'bird.org'
 
-def SOA():
+
+def SOA(URL):
     def GetData():
 
         global DateRegex, TagP, Replace, tags
@@ -28,7 +30,7 @@ def SOA():
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
                                  ' Chrome/90.0.4430.212 Safari/537.36'}
 
-        Request = requests.get('https://dnshistory.org/historical-dns-records/soa/dnshistory.org', headers=headers)
+        Request = requests.get(f'https://dnshistory.org/historical-dns-records/soa/{URL}', headers=headers)
 
         Response = Request.text
 
@@ -50,6 +52,8 @@ def SOA():
             TagP = str(TagP).replace(i, '')
         DateFind = re.findall(DateRegex, TagP)
 
+        print(DateFind)
+
         Indexs = []
 
         for i in list(DateFind):
@@ -62,7 +66,12 @@ def SOA():
 
         LastIndex = Indexs[-1]
         End = TagP.rfind('\n')
-        TXTRecordList.append(TagP[LastIndex:End])
+
+        SOARecordList.append(TagP[LastIndex:End])
+
+        LastIndex = Indexs[-1]
+        End = TagP.rfind('\n')
+        SOARecordList.append(TagP[LastIndex:End])
     def OutputData():
 
         for i in range(len(SOARecordList)):
@@ -520,7 +529,7 @@ def TXT():
     OutputData()
 
 
-TXT()
+SOA(URL)
 
 # SOA()
 
