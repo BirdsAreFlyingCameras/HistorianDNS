@@ -16,7 +16,7 @@ Methods:
 
 Libraries used:
 
-  BeautifulSoup, requests, re
+  BeautifulSoup, requests, re, os
   
 
 ***Not A Bird | CEO of Bird Inc.***
