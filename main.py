@@ -4,30 +4,47 @@ import re
 import os
 
 
+def SetUp():
+    global URL
 
-URL = input('Enter URL: ')
+    def Input():
+        global URL
+        URL = input('Enter URL: ')
 
+        def Checks():
+            global URL
 
-if URL.startswith('http://'):
-    URL = URL.replace('http://', '')
-elif URL.startswith('https://'):
-    URL = URL.replace('https://', '')
-else:
-    pass
+            if URL.startswith('http://'):
+                URL = URL.replace('http://', '')
+            elif URL.startswith('https://'):
+                URL = URL.replace('https://', '')
+            else:
+                pass
 
-if URL.endswith('/'):
-    URL = URL.replace('/', '')
-else:
-    pass
+            if URL.startswith('www.'):
+                URL = URL.replace('www.', '')
+            else:
+                pass
 
-def main(URL):
+            if URL.endswith('/'):
+                URL = URL.replace('/', '')
+            else:
+                pass
+
+        Checks()
+
+    Input()
 
     if os.path.exists(f'{URL}'):
         pass
     else:
         os.mkdir(f'{URL}')
-
     os.chdir(f'{URL}')
+SetUp()
+
+
+
+def main():
     def SOA(URL):
         def GetData():
 
@@ -92,22 +109,35 @@ def main(URL):
             SOARecordList.append(TagP[LastIndex:End])
         def OutputData():
 
+            global SOAOutputList
+            SOAOutputList = []
             for i in range(len(SOARecordList)):
                 SOARecordStr = str(SOARecordList[i])
                 SOARecordStr = SOARecordStr.replace('-&gt;', '->')
 
-                print(SOARecordStr)
+                SOAOutputList.append(SOARecordStr)
+
+            def ConsoleOutput():
+
+                for SOARecordStr in SOAOutputList:
+
+                    print(SOARecordStr)
+
+
+            def TXTOutput():
+
+                for SOARecordStr in SOAOutputList:
+                    if os.path.exists('SOA.txt'):
+                        with open('SOA.txt', 'a') as f:
+                            f.write(f'{SOARecordStr}\n\n')
+                    else:
+                        with open('SOA.txt', 'x') as f:
+                            f.write(f'{SOARecordStr}\n\n')
 
 
 
-                if os.path.exists('SOA.txt'):
-                    with open('SOA.txt', 'a') as f:
-                        f.write(SOARecordStr + '\n')
-                else:
-                    with open('SOA.txt', 'x') as f:
-                        f.write(SOARecordStr + '\n')
-
-
+            ConsoleOutput()
+            TXTOutput()
 
 
         GetData()
@@ -180,40 +210,48 @@ def main(URL):
 
             global NSList, NSRLinksList
 
-            for i in Lines:
-                Index1 = (i.find('href='))
-                Index2 = (i.find('>'))
+            def ConsoleOutput():
 
-                RLink = i[Index1 + 6:Index2 - 2]
+                for i in Lines:
+                    Index1 = (i.find('href='))
+                    Index2 = (i.find('>'))
 
-                NSRLinksList.append(RLink)
+                    RLink = i[Index1 + 6:Index2 - 2]
 
-                Index1 = (i.find('<'))
-                Index2 = (i.find('>'))
+                    NSRLinksList.append(RLink)
 
-                LinkRemove = i[Index1:Index2 + 1]
+                    Index1 = (i.find('<'))
+                    Index2 = (i.find('>'))
 
-                i = i.replace(LinkRemove, '')
+                    LinkRemove = i[Index1:Index2 + 1]
 
-                i = i.replace('-&gt;', '->')
+                    i = i.replace(LinkRemove, '')
 
-                NSList.append(str(i))
+                    i = i.replace('-&gt;', '->')
 
-            for i in NSList:
-                print(i)
+                    NSList.append(str(i))
 
-            #for i in NSRLinksList:
-            #    print(i)
+                for i in NSList:
+                    print(i)
+
+                #for i in NSRLinksList:
+                #    print(i)
 
 
-            if os.path.exists('NS.txt'):
-                with open('NS.txt', 'a') as f:
-                    for i in NSList:
-                        f.write(i + '\n')
-            else:
-                with open('NS.txt', 'x') as f:
-                    for i in NSList:
-                        f.write(i + '\n')
+            def TXTOutput():
+
+                if os.path.exists('NS.txt'):
+                    with open('NS.txt', 'a') as f:
+
+                        for i in NSList:
+                            f.write(f'{i}\n\n')
+                else:
+                    with open('NS.txt', 'x') as f:
+                        for i in NSList:
+                            f.write(f'{i}\n\n')
+
+            ConsoleOutput()
+            TXTOutput()
 
         GetData()
         FilterData()
@@ -311,12 +349,11 @@ def main(URL):
             if os.path.exists('MX.txt'):
                 with open('MX.txt', 'a') as f:
                     for i in MXList:
-                        f.write(i + '\n')
+                        f.write(f'{i}\n\n')
             else:
                 with open('MX.txt', 'x') as f:
                     for i in MXList:
-                        f.write(i + '\n')
-
+                        f.write(f'{i}\n\n')
 
         GetData()
         FilterData()
@@ -417,12 +454,11 @@ def main(URL):
             if os.path.exists('A.txt'):
                 with open('A.txt', 'a') as f:
                     for i in AList:
-                        f.write(i + '\n')
+                        f.write(f'{i}\n\n')
             else:
                 with open('A.txt', 'x') as f:
                     for i in AList:
-                        f.write(i + '\n')
-
+                        f.write(f'{i}\n\n')
 
         GetData()
         FilterData()
@@ -519,12 +555,13 @@ def main(URL):
             if os.path.exists('AAAA.txt'):
                 with open('AAAA.txt', 'a') as f:
                     for i in AAAAList:
-                        f.write(i + '\n')
+                        f.write(f'{i}\n\n')
 
             else:
                 with open('AAAA.txt', 'x') as f:
                     for i in AAAAList:
-                        f.write(i + '\n')
+                        f.write(f'{i}\n\n')
+
         GetData()
         FilterData()
         OutputData()
@@ -594,17 +631,33 @@ def main(URL):
             TXTRecordList.append(TagP[LastIndex:End])
         def OutputData():
 
+            global TXTOutputList
+            TXTOutputList = []
             for i in range(len(TXTRecordList)):
                 TXTRecordStr = str(TXTRecordList[i])
                 TXTRecordStr = TXTRecordStr.replace('-&gt;', '->')
-                print(TXTRecordStr)
 
-                if os.path.exists('TXT.txt'):
-                    with open('TXT.txt', 'a') as f:
-                        f.write(TXTRecordStr + '\n')
-                else:
-                    with open('TXT.txt', 'x') as f:
-                        f.write(TXTRecordStr + '\n')
+                TXTOutputList.append(TXTRecordStr)
+
+            def ConsoleOutput():
+
+                for TXTRecordStr in TXTOutputList:
+
+                    print(TXTRecordStr)
+
+
+            def TXTOutput():
+
+                for TXTRecordStr in TXTOutputList:
+                    if os.path.exists('TXT.txt'):
+                        with open('TXT.txt', 'a') as f:
+                            f.write(f'{TXTRecordStr}\n\n')
+                    else:
+                        with open('TXT.txt', 'x') as f:
+                            f.write(f'{TXTRecordStr}\n\n')
+
+            ConsoleOutput()
+            TXTOutput()
 
         GetData()
         FilterData()
@@ -616,9 +669,10 @@ def main(URL):
     A(URL)
     AAAA(URL)
     TXT(URL)
-
+    print('Done')
+    exit()
 if __name__ == "__main__":
-    main(URL)
+    main()
 
 
 # Dev State
