@@ -1,6 +1,6 @@
 # HistorianDNS
 
-Version Number: Beta 0.2
+Version Number: Beta 0.2.1
 
 About:
 
