@@ -8,7 +8,7 @@ About:
 
 Goals:
 
-  Retrieve and present DNS information in a clean and concise way.
+  Retrieve and present the DNS history for a given website in a clean and concise way.
 
 Methods:
 
