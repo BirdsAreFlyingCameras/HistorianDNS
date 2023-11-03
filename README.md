@@ -1,6 +1,6 @@
 # HistorianDNS
 
-Version Number: Beta 0.2.1
+Version Number: Beta 0.2.2
 
 About:
 
@@ -16,7 +16,7 @@ Methods:
 
 Libraries used:
 
-  BeautifulSoup, requests, re, os
+  BeautifulSoup, requests, re, os, PyEnhance
   
 
 ***Not A Bird | CEO of Bird Inc.***
