@@ -38,6 +38,14 @@ class Main:
 
         self.GetBasePageRecords(URL=URL)
 
+
+        self.RecordTypes = ["SOA","NS","MX","A","AAAA","CNAME", "PTR", "TXT"]
+        for RecordType in self.RecordTypes:
+            self.GetHistory(URL=URL, Type=RecordType.lower())
+
+        for RecordType in self.RecordTypes:
+            print(self.Records[RecordType])
+
     def GetBasePageRecords(self, URL):
 
         WebRequest = requests.get(f'https://dnshistory.org/dns-records/{URL}', headers=self.WebTool.RequestHeaders)
@@ -56,7 +64,6 @@ class Main:
         for Iter, Index in enumerate(IndexsForSoups):
 
             if Iter+1 == len(IndexsForSoups):
-                print('!')
                 break
             else:
                 NextIndex = IndexsForSoups[Iter+1]
@@ -74,20 +81,10 @@ class Main:
 
             self.Records[DictGuide.get(Iter)].append([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items])
 
-        #print(self.Records)
-
-        #for Key in self.Records.keys():
-        #    for Value in self.Records[Key]:
-        #        print(Value)
-#
-        self.GetHistory(URL=URL, Type='a')
 
     def GetHistory(self, URL, Type):
 
         DateRegex = re.compile("\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2}")
-
-        IndexsForRecords = []
-        Test = []
 
         WebRequest = requests.get(f'https://dnshistory.org/historical-dns-records/{Type}/{URL}', headers=self.WebTool.RequestHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
@@ -100,19 +97,34 @@ class Main:
 
         Content = str(Content)
 
+        TagPattern = re.compile(r'</?\w*/?>')  # Matches any HTML tag
+
         for Iter, DataForIndex in enumerate(IndexsForRecords):
 
             if Iter+1 == len(IndexsForRecords):
                 Index1 = Content.index(DataForIndex)
                 Index2 = Content[Index1:].index('</p>')
                 Index2 = int(Index1)+int(Index2)
-                print(Content[Index1:Index2])
+                Record = Content[Index1:Index2]
+
+                #print(Content[Index1:Index2])
+                #print((TagPattern.sub('', str(Record).replace('\n', ' '))))
+
+                self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
+
                 break
 
             Index1 = Content.index(DataForIndex)
             Index2 = Content.index(IndexsForRecords[Iter+1])
+            #print(Content[Index1:Index2])
+            Record = Content[Index1:Index2]
 
-            print(Content[Index1:Index2])
+
+            #self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
+
+            #print((TagPattern.sub('', str(Record).replace('\n', ' '))))
+
+            self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
 
 
 
