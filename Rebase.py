@@ -2,7 +2,7 @@ import requests
 from PyEnhance import WebTools,TextSets
 from bs4 import BeautifulSoup
 from pprint import pprint as Pprint
-
+import re
 class Main:
 
     def __init__(self, URL):
@@ -29,14 +29,16 @@ class Main:
             "wbr"
         ]
 
+        print(max([len(Tag) for Tag in self.Tags]))
+
         for Tag in self.Tags:
             self.Replace.append(f'<{Tag}>')
             self.Replace.append(f'</{Tag}>')
             self.Replace.append(f'<{Tag}/>')
 
-        self.GetRecords(URL=URL)
+        self.GetBasePageRecords(URL=URL)
 
-    def GetRecords(self, URL):
+    def GetBasePageRecords(self, URL):
 
         WebRequest = requests.get(f'https://dnshistory.org/dns-records/{URL}', headers=self.WebTool.RequestHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
@@ -46,11 +48,10 @@ class Main:
 
         RecordsContainers = WebRequestSoup.find_all('h3')
 
-        print(RecordsContainers)
+        #print(RecordsContainers)
 
         for RecordType in RecordsContainers:
             IndexsForSoups.append(WebRequest.text.index(str(RecordType)))
-        print(IndexsForSoups)
 
         for Iter, Index in enumerate(IndexsForSoups):
 
@@ -61,21 +62,58 @@ class Main:
                 NextIndex = IndexsForSoups[Iter+1]
                 ListForSoups.append(WebRequest.text[Index:NextIndex])
 
-       # Pprint(ListForSoups)
-
         DictGuide = {0:"SOA", 1:"NS", 2:"MX", 3:"A", 4:"AAAA", 5:"CNAME", 6:"PTR", 7:"TXT"}
 
         for Iter, PreSoup in enumerate(ListForSoups):
             IterSoup = BeautifulSoup(PreSoup, 'html.parser')
             Items = IterSoup.find_all('p')
 
-            #FreshSoup = BeautifulSoup(str(Items), 'html.parser').stripped_strings
-            #IterList = []
-            #for Item in FreshSoup:
-            #    IterList.append(Item)
-            #self.Records[DictGuide.get(Iter)].append(IterList)
+            TagPattern = re.compile(r'</?\w*/?>')  # Matches any HTML tag
 
-            self.Records[DictGuide.get(Iter)].append(str(Items))
-        Pprint(self.Records)
+            #print([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items])
+
+            self.Records[DictGuide.get(Iter)].append([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items])
+
+        #print(self.Records)
+
+        #for Key in self.Records.keys():
+        #    for Value in self.Records[Key]:
+        #        print(Value)
+#
+        self.GetHistory(URL=URL, Type='a')
+
+    def GetHistory(self, URL, Type):
+
+        DateRegex = re.compile("\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2}")
+
+        IndexsForRecords = []
+        Test = []
+
+        WebRequest = requests.get(f'https://dnshistory.org/historical-dns-records/{Type}/{URL}', headers=self.WebTool.RequestHeaders)
+        WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
+
+        Content = WebRequestSoup.find_all("p")
+
+        IndexsForRecords = re.findall(DateRegex, str(Content))
+
+        print(IndexsForRecords)
+
+        Content = str(Content)
+
+        for Iter, DataForIndex in enumerate(IndexsForRecords):
+
+            if Iter+1 == len(IndexsForRecords):
+                Index1 = Content.index(DataForIndex)
+                Index2 = Content[Index1:].index('</p>')
+                Index2 = int(Index1)+int(Index2)
+                print(Content[Index1:Index2])
+                break
+
+            Index1 = Content.index(DataForIndex)
+            Index2 = Content.index(IndexsForRecords[Iter+1])
+
+            print(Content[Index1:Index2])
+
+
 
 Main(URL='bumble.com')
