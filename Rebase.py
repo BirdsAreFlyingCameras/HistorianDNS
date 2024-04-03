@@ -175,17 +175,29 @@ class Main:
 
         RecordTupsForTables = ('SOA','NS'),("MX","A"),("AAAA","CNAME"),("PTR","TXT")
 
+
+        table = Table()
+        table.show_header = False
+        table.add_column(style="rgb(255,255,255)", no_wrap=True)
+        table.add_column(style="rgb(255,255,255)", no_wrap=True)
+        table.border_style = "rgb(255,255,255)"
+
         for RecordType1, RecordType2 in RecordTupsForTables:
-            table = Table()
             table.title_style = "bold"
-            table.border_style = "rgb(255,255,255)"
-            table.add_column(f"{RecordType1}", justify="right", style="rgb(255,255,255)", no_wrap=True)
-            table.add_column(f"{RecordType2}", style="rgb(255,255,255)", no_wrap=True)
+
+            SectionHeader1 = f"════════ {RecordType1} ════════"
+            SectionHeader2 = f"════════ {RecordType2} ════════"
+
+            table.add_row(SectionHeader1,SectionHeader2)
+            table.add_section()
 
             for RecordType1, RecordType2 in zip(self.RecordsFiltered[RecordType1], self.RecordsFiltered[RecordType2]):
                 table.add_row(RecordType1, RecordType2)
 
-            console = Console()
-            console.print(table)
+            table.add_section()
+
+
+        console = Console()
+        console.print(table)
 
 Main(URL='bumble.com')
