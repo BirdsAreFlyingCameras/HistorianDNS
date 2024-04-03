@@ -3,6 +3,9 @@ from PyEnhance import WebTools,TextSets
 from bs4 import BeautifulSoup
 from pprint import pprint as Pprint
 import re
+
+from rich.console import Console
+from rich.table import Table
 class Main:
 
     def __init__(self, URL):
@@ -150,21 +153,18 @@ class Main:
                     self.RecordsFiltered[RecordType].append(str(Record))
 
 
-
+        self.Output()
         #for RecordType in self.RecordTypes:
         #    print(self.RecordsFiltered[RecordType])
 
-        for RecordType in self.RecordTypes:
-            print('\n')
-            print(f"Record Type: {RecordType}")
-            for Record in self.RecordsFiltered[RecordType]:
-                print(Record)
+    def Output(self):
 
+        #for RecordType in self.RecordTypes:
 
-
-
-        from rich.console import Console
-        from rich.table import Table
+        #    print('\n')
+        #    print(f"Record Type: {RecordType}")
+        #    for Record in self.RecordsFiltered[RecordType]:
+        #        print(Record)
 
         LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
 
@@ -173,29 +173,19 @@ class Main:
                 self.RecordsFiltered[RecordType] += [" "]
 
 
+        RecordTupsForTables = ('SOA','NS'),("MX","A"),("AAAA","CNAME"),("PTR","TXT")
 
-        table = Table()
+        for RecordType1, RecordType2 in RecordTupsForTables:
+            table = Table()
+            table.title_style = "bold"
+            table.border_style = "rgb(255,255,255)"
+            table.add_column(f"{RecordType1}", justify="right", style="rgb(255,255,255)", no_wrap=True)
+            table.add_column(f"{RecordType2}", style="rgb(255,255,255)", no_wrap=True)
 
-        table.title_style = "bold"
+            for RecordType1, RecordType2 in zip(self.RecordsFiltered[RecordType1], self.RecordsFiltered[RecordType2]):
+                table.add_row(RecordType1, RecordType2)
 
-        table.border_style = "rgb(255,255,255)"
-        table.add_column("SOA", justify="right", style="rgb(255,255,255)", no_wrap=True)
-        table.add_column("NS", style="rgb(255,255,255)", no_wrap=True)
-        table.add_column("MX", style="rgb(255,255,255)", no_wrap=True)
-        table.add_column("A", style="rgb(255,255,255)", no_wrap=True)
-        table.add_column("AAAA", style="rgb(255,255,255)", no_wrap=True)
-        table.add_column("CNAME", style="rgb(255,255,255)", no_wrap=True)
-        table.add_column("PTR", style="rgb(255,255,255)", no_wrap=True)
-        table.add_column("TXT", style="rgb(255,255,255)", no_wrap=True)
-
-        #for SOA, NS, TXT, PTR in zip(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['TXT'], self.RecordsFiltered['PTR']):
-        #    table.add_row(SOA, NS, TXT, PTR)
-
-        for SOA, NS, MX, A, AAAA, CNAME, PTR, TXT in zip(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT']):
-            table.add_row(SOA, NS, MX, A, AAAA, CNAME, PTR, TXT)
-
-
-        console = Console()
-        console.print(table)
+            console = Console()
+            console.print(table)
 
 Main(URL='bumble.com')
