@@ -113,16 +113,15 @@ class Main:
 
     def Filter(self):
         self.RecordsToBeFiltered = {'SOA':[], 'NS':[], 'MX':[], 'A':[],
-                        'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
+                                    'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
 
         self.RecordsFiltered = {'SOA':[], 'NS':[], 'MX':[], 'A':[],
-                        'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
+                                'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
 
 
         DateRegex = re.compile("(?=\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2})")
         for RecordType in self.RecordTypes:
             self.RecordsToBeFiltered[RecordType] = re.split(DateRegex, ''.join(self.Records[RecordType]))
-            print(self.RecordsToBeFiltered[RecordType])
 
 
         for RecordType in self.RecordTypes:
@@ -144,12 +143,10 @@ class Main:
                             Record = f"{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
 
 
-                    if RecordType == "NS":
+                    if RecordType == "NS" or RecordType == "A" or RecordType == "AAAA" or RecordType == "MX":
                         Index1 = Record.index('<')
                         Index2 = Record.rindex('>')
-                        print("!!!!")
                         Record = f"{Record[:Index1]}{Record[Index2+1:]}"
-                        print(Record)
                     self.RecordsFiltered[RecordType].append(str(Record))
 
 
@@ -157,27 +154,45 @@ class Main:
         #for RecordType in self.RecordTypes:
         #    print(self.RecordsFiltered[RecordType])
 
-        for Record in self.RecordsFiltered["SOA"]:
-            print(Record)
-        for Record in self.RecordsFiltered["NS"]:
-            print(Record)
         for RecordType in self.RecordTypes:
-            print(len(self.RecordsFiltered[RecordType]))
+            print('\n')
+            print(f"Record Type: {RecordType}")
+            for Record in self.RecordsFiltered[RecordType]:
+                print(Record)
+
+
 
 
         from rich.console import Console
         from rich.table import Table
+
+        LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
+
+        for RecordType in self.RecordTypes:
+            for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
+                self.RecordsFiltered[RecordType] += [" "]
+
+
 
         table = Table()
 
         table.title_style = "bold"
 
         table.border_style = "rgb(255,255,255)"
-        table.add_column("SOA", justify="right", style="rgb(255,255,255)", no_wrap=False)
-        table.add_column("NS", style="rgb(255,255,255)", no_wrap=False)
+        table.add_column("SOA", justify="right", style="rgb(255,255,255)", no_wrap=True)
+        table.add_column("NS", style="rgb(255,255,255)", no_wrap=True)
+        table.add_column("MX", style="rgb(255,255,255)", no_wrap=True)
+        table.add_column("A", style="rgb(255,255,255)", no_wrap=True)
+        table.add_column("AAAA", style="rgb(255,255,255)", no_wrap=True)
+        table.add_column("CNAME", style="rgb(255,255,255)", no_wrap=True)
+        table.add_column("PTR", style="rgb(255,255,255)", no_wrap=True)
+        table.add_column("TXT", style="rgb(255,255,255)", no_wrap=True)
 
-        for SOA, NS in zip(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS']):
-            table.add_row(SOA, NS)
+        #for SOA, NS, TXT, PTR in zip(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['TXT'], self.RecordsFiltered['PTR']):
+        #    table.add_row(SOA, NS, TXT, PTR)
+
+        for SOA, NS, MX, A, AAAA, CNAME, PTR, TXT in zip(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT']):
+            table.add_row(SOA, NS, MX, A, AAAA, CNAME, PTR, TXT)
 
 
         console = Console()
