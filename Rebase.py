@@ -29,8 +29,6 @@ class Main:
             "wbr"
         ]
 
-        print(max([len(Tag) for Tag in self.Tags]))
-
         for Tag in self.Tags:
             self.Replace.append(f'<{Tag}>')
             self.Replace.append(f'</{Tag}>')
@@ -43,8 +41,7 @@ class Main:
         for RecordType in self.RecordTypes:
             self.GetHistory(URL=URL, Type=RecordType.lower())
 
-        for RecordType in self.RecordTypes:
-            print(self.Records[RecordType])
+        self.Filter()
 
     def GetBasePageRecords(self, URL):
 
@@ -79,7 +76,7 @@ class Main:
 
             #print([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items])
 
-            self.Records[DictGuide.get(Iter)].append([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items])
+            self.Records[DictGuide.get(Iter)].append(''.join([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items]).strip())
 
 
     def GetHistory(self, URL, Type):
@@ -93,8 +90,6 @@ class Main:
 
         IndexsForRecords = re.findall(DateRegex, str(Content))
 
-        print(IndexsForRecords)
-
         Content = str(Content)
 
         TagPattern = re.compile(r'</?\w*/?>')  # Matches any HTML tag
@@ -107,25 +102,85 @@ class Main:
                 Index2 = int(Index1)+int(Index2)
                 Record = Content[Index1:Index2]
 
-                #print(Content[Index1:Index2])
-                #print((TagPattern.sub('', str(Record).replace('\n', ' '))))
-
                 self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
-
                 break
 
             Index1 = Content.index(DataForIndex)
             Index2 = Content.index(IndexsForRecords[Iter+1])
-            #print(Content[Index1:Index2])
             Record = Content[Index1:Index2]
-
-
-            #self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
-
-            #print((TagPattern.sub('', str(Record).replace('\n', ' '))))
 
             self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
 
+    def Filter(self):
+        self.RecordsToBeFiltered = {'SOA':[], 'NS':[], 'MX':[], 'A':[],
+                        'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
 
+        self.RecordsFiltered = {'SOA':[], 'NS':[], 'MX':[], 'A':[],
+                        'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
+
+
+        DateRegex = re.compile("(?=\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2})")
+        for RecordType in self.RecordTypes:
+            self.RecordsToBeFiltered[RecordType] = re.split(DateRegex, ''.join(self.Records[RecordType]))
+            print(self.RecordsToBeFiltered[RecordType])
+
+
+        for RecordType in self.RecordTypes:
+            for iter, Record in enumerate(self.RecordsToBeFiltered[RecordType]):
+                if not Record == "":
+                    Record = str(Record).replace('-&gt;', '->')
+
+                    if RecordType == "SOA":
+
+                        Record = Record.replace('&lt;', "").replace('&gt;', '')
+
+                        if iter == 0 or iter == 1:
+                            NewLineList = ["MName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
+                        else:
+                            NewLineList = ["MName:", "RName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
+
+                        for NewLine in NewLineList:
+                            NewLineIndex = Record.index(NewLine)
+                            Record = f"{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
+
+
+                    if RecordType == "NS":
+                        Index1 = Record.index('<')
+                        Index2 = Record.rindex('>')
+                        print("!!!!")
+                        Record = f"{Record[:Index1]}{Record[Index2+1:]}"
+                        print(Record)
+                    self.RecordsFiltered[RecordType].append(str(Record))
+
+
+
+        #for RecordType in self.RecordTypes:
+        #    print(self.RecordsFiltered[RecordType])
+
+        for Record in self.RecordsFiltered["SOA"]:
+            print(Record)
+        for Record in self.RecordsFiltered["NS"]:
+            print(Record)
+        for RecordType in self.RecordTypes:
+            print(len(self.RecordsFiltered[RecordType]))
+
+
+        from rich.console import Console
+        from rich.table import Table
+
+        table = Table()
+
+        table.title_style = "bold"
+
+        table.border_style = "rgb(255,255,255)"
+        table.add_column("SOA", justify="right", style="rgb(255,255,255)", no_wrap=False)
+        table.add_column("NS", style="rgb(255,255,255)", no_wrap=False)
+
+        for SOA, NS in zip(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS']):
+            table.add_row(SOA, NS)
+
+
+        console = Console()
+        console.print(table)
 
 Main(URL='bumble.com')
