@@ -130,7 +130,7 @@ class Main:
         for RecordType in self.RecordTypes:
             for iter, Record in enumerate(self.RecordsToBeFiltered[RecordType]):
                 if not Record == "":
-                    Record = str(Record).replace('-&gt;', '->')
+                    Record = str(Record).replace('-&gt;', '⇒')
 
                     if RecordType == "SOA":
 
@@ -143,17 +143,19 @@ class Main:
 
                         for NewLine in NewLineList:
                             NewLineIndex = Record.index(NewLine)
-                            Record = f"{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
 
+                            if NewLine == "MName:":
+                                Record = f"\n{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
+                            else:
+                                Record = f"{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
 
                     if RecordType == "NS" or RecordType == "A" or RecordType == "AAAA" or RecordType == "MX":
                         Index1 = Record.index('<')
                         Index2 = Record.rindex('>')
                         Record = f"{Record[:Index1]}{Record[Index2+1:]}"
                     self.RecordsFiltered[RecordType].append(str(Record))
-
-
         self.Output()
+
     def Output(self):
 
         LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
@@ -197,8 +199,14 @@ class Main:
 
             Section1HeaderText = f'{RecordType1} Records'
             Section2HeaderText = f'{RecordType2} Records'
-            SectionHeader1 = f"{'═'*int(((LongestStingLeft+10)/2)-len(Section1HeaderText)/2)} {Section1HeaderText} {'═'*int(((LongestStingLeft+10)/2)-len(Section1HeaderText)/2)}"
-            SectionHeader2 = f"{'═'*int(((LongestStingRight+10)/2)-len(Section2HeaderText)/2)} {Section2HeaderText} {'═'*int(((LongestStingRight+10)/2)-len(Section2HeaderText)/2)}"
+
+            Section1HeaderSides = f"{'═'*int(((LongestStingLeft+10)/2)-(len(Section1HeaderText)/2))}"
+            Section2HeaderSides = f"{'═'*int(((LongestStingRight+10)/2)-(len(Section1HeaderText)/2))}"
+
+
+
+            SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides}"
+            SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides}"
 
             table.add_row(SectionHeader1, SectionHeader2)
             table.add_section()
