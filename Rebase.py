@@ -175,13 +175,11 @@ class Main:
             LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
             LongestStingsLeft.append(LongestStingInList)
         LongestStingLeft = len(max(LongestStingsLeft, key=len))
-        print(LongestStingLeft)
 
         for RecordType in ["NS","AAAA","CNAME","TXT"]:
             LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
             LongestStingsRight.append(LongestStingInList)
         LongestStingRight = len(max(LongestStingsRight, key=len))
-        print(LongestStingRight)
 
         RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
 
@@ -194,46 +192,49 @@ class Main:
 
 
         for RecordType1, RecordType2 in RecordTupsForTables:
+
             table.title_style = "bold"
 
-            SectionHeader1 = f"{'═'*int((LongestStingLeft+10)/2)} {RecordType1} {'═'*int((LongestStingLeft+10)/2)}"
-            SectionHeader2 = f"{'═'*int((LongestStingRight+10)/2)} {RecordType2} {'═'*int((LongestStingRight+10)/2)}"
+            Section1HeaderText = f'{RecordType1} Records'
+            Section2HeaderText = f'{RecordType2} Records'
+            SectionHeader1 = f"{'═'*int(((LongestStingLeft+10)/2)-len(Section1HeaderText)/2)} {Section1HeaderText} {'═'*int(((LongestStingLeft+10)/2)-len(Section1HeaderText)/2)}"
+            SectionHeader2 = f"{'═'*int(((LongestStingRight+10)/2)-len(Section2HeaderText)/2)} {Section2HeaderText} {'═'*int(((LongestStingRight+10)/2)-len(Section2HeaderText)/2)}"
 
             table.add_row(SectionHeader1, SectionHeader2)
             table.add_section()
 
-            if len(LongestList) > 100:
-                LenRecordType1 = RealLenDict[RecordType1]
-                LenRecordType2 = RealLenDict[RecordType2]
+            LenRecordType1 = RealLenDict[RecordType1]
+            LenRecordType2 = RealLenDict[RecordType2]
 
-                if LenRecordType1 < 100 and LenRecordType2 < 100:
-                    print("True!")
-                    DisplayRange = max(LenRecordType1, LenRecordType2)
-                else:
-                    DisplayRange = 100
-
-
-                for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:DisplayRange], self.RecordsFiltered[RecordType2][:DisplayRange]):
-                    table.add_row(RecordType1Item, RecordType2Item)
-
-                table.add_row('', '')
-
-                if RealLenDict[RecordType1] > 100:
-                    LeftRowText = f"There are {RealLenDict[RecordType1] - DisplayRange} More {RecordType1} records."
-                else:
-                    LeftRowText = ''
-
-                if RealLenDict[RecordType2] > 100:
-                    RightRowText = f"There are {RealLenDict[RecordType2] - DisplayRange} More {RecordType2} records."
-                else:
-                    RightRowText = ''
-
-                table.add_row("", "")
-                table.add_row(LeftRowText, RightRowText)
-
+            if LenRecordType1 < 100 and LenRecordType2 < 100:
+                DisplayRange = max(LenRecordType1, LenRecordType2)
             else:
-                for RecordType1, RecordType2 in zip(self.RecordsFiltered[RecordType1], self.RecordsFiltered[RecordType2]):
-                    table.add_row(RecordType1, RecordType2)
+                DisplayRange = 100
+
+            if LenRecordType1 == 0:
+                self.RecordsFiltered[RecordType1].insert(0, f"No {RecordType1} Records Found")
+            if LenRecordType2 == 0:
+                self.RecordsFiltered[RecordType2].insert(0, f"No {RecordType2} Records Found")
+
+            table.add_row('', '')
+
+            for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:DisplayRange], self.RecordsFiltered[RecordType2][:DisplayRange]):
+                table.add_row(RecordType1Item, RecordType2Item)
+
+            table.add_row('', '')
+
+            if RealLenDict[RecordType1] > 100:
+                LeftRowText = f"There are {RealLenDict[RecordType1] - DisplayRange} More {RecordType1} records."
+            else:
+                LeftRowText = ''
+
+            if RealLenDict[RecordType2] > 100:
+                RightRowText = f"There are {RealLenDict[RecordType2] - DisplayRange} More {RecordType2} records."
+            else:
+                RightRowText = ''
+
+            if not LeftRowText == '' and RightRowText == '':
+                table.add_row(LeftRowText, RightRowText)
 
             table.add_section()
 
@@ -241,4 +242,4 @@ class Main:
         console = Console()
         console.print(table)
 
-Main(URL='google.com')
+Main(URL='bird.org')
