@@ -168,12 +168,28 @@ class Main:
 
         LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
 
+
+        RealLenDict = {
+            "SOA":len(list(set(self.RecordsFiltered['SOA']))), "NS":len(list(set(self.RecordsFiltered['NS']))), "MX":len(list(set(self.RecordsFiltered['MX']))),
+            "A":len(list(set(self.RecordsFiltered['A']))), "AAAA":len(list(set(self.RecordsFiltered['AAAA']))), "CNAME":len(list(set(self.RecordsFiltered['CNAME']))),
+            "PTR":len(list(set(self.RecordsFiltered['PTR']))), "TXT":len(list(set(self.RecordsFiltered['TXT'])))
+        }
+
+        print(RealLenDict)
+
         for RecordType in self.RecordTypes:
             for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
                 self.RecordsFiltered[RecordType] += [" "]
 
+        LongestStings = []
 
-        RecordTupsForTables = ('SOA','NS'),("MX","A"),("AAAA","CNAME"),("PTR","TXT")
+        for RecordType in self.RecordTypes:
+            LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
+            LongestStings.append(LongestStingInList)
+        LongestSting = len(max(LongestStings, key=len))
+
+
+        RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
 
 
         table = Table()
@@ -182,17 +198,44 @@ class Main:
         table.add_column(style="rgb(255,255,255)", no_wrap=True)
         table.border_style = "rgb(255,255,255)"
 
+        table.min_width = LongestSting+10
+
         for RecordType1, RecordType2 in RecordTupsForTables:
             table.title_style = "bold"
 
             SectionHeader1 = f"════════ {RecordType1} ════════"
             SectionHeader2 = f"════════ {RecordType2} ════════"
 
-            table.add_row(SectionHeader1,SectionHeader2)
+            table.add_row(SectionHeader1, SectionHeader2)
             table.add_section()
 
-            for RecordType1, RecordType2 in zip(self.RecordsFiltered[RecordType1], self.RecordsFiltered[RecordType2]):
-                table.add_row(RecordType1, RecordType2)
+            if len(LongestList) > 100:
+                for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:100], self.RecordsFiltered[RecordType2][:100]):
+                    table.add_row(RecordType1Item, RecordType2Item)
+                table.add_row('', '')
+
+                NoLeftRowText = False
+                NoRightRowText = False
+
+                if RealLenDict[RecordType1] > 100:
+                    LeftRowText = f"{RealLenDict[RecordType1] - 100} More {RecordType1} records."
+                else:
+                    NoLeftRowText = True
+                    LeftRowText = ''
+
+                if RealLenDict[RecordType2] > 100:
+                    RightRowText = f"{RealLenDict[RecordType2] - 100} More {RecordType2} records."
+                else:
+                    NoRightRowText = True
+                    RightRowText = ''
+
+                #if not NoLeftRowText == True and not NoRightRowText == True:
+                table.add_row("", "")
+                table.add_row(LeftRowText, RightRowText)
+
+            else:
+                for RecordType1, RecordType2 in zip(self.RecordsFiltered[RecordType1], self.RecordsFiltered[RecordType2]):
+                    table.add_row(RecordType1, RecordType2)
 
             table.add_section()
 
@@ -200,4 +243,4 @@ class Main:
         console = Console()
         console.print(table)
 
-Main(URL='bumble.com')
+Main(URL='google.com')
