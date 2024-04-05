@@ -153,6 +153,7 @@ class Main:
                         Index1 = Record.index('<')
                         Index2 = Record.rindex('>')
                         Record = f"{Record[:Index1]}{Record[Index2+1:]}"
+
                     self.RecordsFiltered[RecordType].append(str(Record))
         self.Output()
 
@@ -167,8 +168,16 @@ class Main:
         }
 
         for RecordType in self.RecordTypes:
-            for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
-                self.RecordsFiltered[RecordType] += [" "]
+
+            if RecordType == "NS":
+                self.RecordsFiltered[RecordType].append('\n'.join(self.RecordsFiltered[RecordType]))
+                self.RecordsFiltered[RecordType] = self.RecordsFiltered[RecordType][-1:]
+                print(self.RecordsFiltered[RecordType])
+                for i in range(len(LongestList) - int(1)):
+                    self.RecordsFiltered[RecordType].append(" ")
+            else:
+                for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
+                    self.RecordsFiltered[RecordType] += [" "]
 
         LongestStingsLeft = []
         LongestStingsRight = []
@@ -185,31 +194,72 @@ class Main:
 
         RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
 
-
         table = Table()
         table.show_header = False
-        table.add_column(style="rgb(255,255,255)", no_wrap=True, min_width=LongestStingLeft+10)
-        table.add_column(style="rgb(255,255,255)", no_wrap=True, min_width=LongestStingRight+10)
+        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=LongestStingLeft+10)
+        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=LongestStingRight+10)
         table.border_style = "rgb(255,255,255)"
-
+        table.title_style = "bold"
 
         for RecordType1, RecordType2 in RecordTupsForTables:
 
-            table.title_style = "bold"
+            #if RecordType2 == "NS":
+            #    self.RecordsFiltered[RecordType2].insert(0, '\n'.join(self.RecordsFiltered[RecordType2]))
+            #    self.RecordsFiltered[RecordType2] = self.RecordsFiltered[RecordType2][:-1]
+            #    print(self.RecordsFiltered[RecordType2])
+
 
             Section1HeaderText = f'{RecordType1} Records'
             Section2HeaderText = f'{RecordType2} Records'
 
-            Section1HeaderSides = f"{'═'*int(((LongestStingLeft+10)/2)-(len(Section1HeaderText)/2))}"
-            Section2HeaderSides = f"{'═'*int(((LongestStingRight+10)/2)-(len(Section1HeaderText)/2))}"
+            Section1HeaderTextLen = len(Section1HeaderText)
+            Section2HeaderTextLen = len(Section2HeaderText)
 
+            LeftTableWidth = LongestStingLeft+10
+            RightTableWidth = LongestStingRight+10
+
+            Section1HeaderSides = '═' * (round(LeftTableWidth/2-((Section1HeaderTextLen+1)/2)))
+            Section2HeaderSides = '═' * (round(RightTableWidth/2-((Section2HeaderTextLen+1)/2)))
 
 
             SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides}"
             SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides}"
 
+            #print(f"Header 1 len: {len(SectionHeader1)}")
+            #print(f"Header 1 Table Width: {LongestStingLeft+10}")
+
+            #print(f"Header 2 len: {len(SectionHeader2)}")
+            #print(f"Header 2 Table Width: {LongestStingRight+10}")
+
+
+            if len(SectionHeader1) > LongestStingLeft+10:
+                Diff = len(SectionHeader1) - (LongestStingLeft+10)
+                #print(f"Diff: {Diff}")
+                if Diff == 1:
+                    SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides[:-1]}"
+                else:
+                    Section1HeaderSides = Section1HeaderSides[:-int(Diff/2)]
+                    SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides}"
+
+                #print(f"New Header 1 len: {len(SectionHeader1)}")
+                #print(f"New Header 1 Table Width: {LongestStingLeft+10}")
+
+            if len(SectionHeader2) > LongestStingRight+10:
+                Diff = len(SectionHeader2) - (LongestStingRight+10)
+                #print(f"Diff: {Diff}")
+                if Diff == 1:
+                    SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides[:-1]}"
+                else:
+                    Section2HeaderSides = Section2HeaderSides[:-int(Diff/2)]
+                    SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides}"
+
+                #print(f"New Header 2 len: {len(SectionHeader2)}")
+                #print(f"New Header 2 Table Width: {LongestStingRight+10}")
+
             table.add_row(SectionHeader1, SectionHeader2)
             table.add_section()
+
+
 
             LenRecordType1 = RealLenDict[RecordType1]
             LenRecordType2 = RealLenDict[RecordType2]
@@ -226,6 +276,8 @@ class Main:
 
             table.add_row('', '')
 
+
+
             for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:DisplayRange], self.RecordsFiltered[RecordType2][:DisplayRange]):
                 table.add_row(RecordType1Item, RecordType2Item)
 
@@ -241,13 +293,14 @@ class Main:
             else:
                 RightRowText = ''
 
+
             if not LeftRowText == '' and RightRowText == '':
                 table.add_row(LeftRowText, RightRowText)
 
-            table.add_section()
 
+            table.add_section()
 
         console = Console()
         console.print(table)
 
-Main(URL='bird.org')
+Main(URL='google.org')
