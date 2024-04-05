@@ -125,7 +125,7 @@ class Main:
         DateRegex = re.compile("(?=\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2})")
         for RecordType in self.RecordTypes:
             self.RecordsToBeFiltered[RecordType] = re.split(DateRegex, ''.join(self.Records[RecordType]))
-
+            self.RecordsToBeFiltered[RecordType] = list(dict.fromkeys(self.RecordsToBeFiltered[RecordType])) # Removes Dupes
 
         for RecordType in self.RecordTypes:
             for iter, Record in enumerate(self.RecordsToBeFiltered[RecordType]):
@@ -154,20 +154,9 @@ class Main:
 
 
         self.Output()
-        #for RecordType in self.RecordTypes:
-        #    print(self.RecordsFiltered[RecordType])
-
     def Output(self):
 
-        #for RecordType in self.RecordTypes:
-
-        #    print('\n')
-        #    print(f"Record Type: {RecordType}")
-        #    for Record in self.RecordsFiltered[RecordType]:
-        #        print(Record)
-
         LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
-
 
         RealLenDict = {
             "SOA":len(list(set(self.RecordsFiltered['SOA']))), "NS":len(list(set(self.RecordsFiltered['NS']))), "MX":len(list(set(self.RecordsFiltered['MX']))),
@@ -175,61 +164,70 @@ class Main:
             "PTR":len(list(set(self.RecordsFiltered['PTR']))), "TXT":len(list(set(self.RecordsFiltered['TXT'])))
         }
 
-        print(RealLenDict)
-
         for RecordType in self.RecordTypes:
             for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
                 self.RecordsFiltered[RecordType] += [" "]
 
-        LongestStings = []
+        LongestStingsLeft = []
+        LongestStingsRight = []
 
-        for RecordType in self.RecordTypes:
+        for RecordType in ["SOA","A","MX","PTR"]:
             LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
-            LongestStings.append(LongestStingInList)
-        LongestSting = len(max(LongestStings, key=len))
+            LongestStingsLeft.append(LongestStingInList)
+        LongestStingLeft = len(max(LongestStingsLeft, key=len))
+        print(LongestStingLeft)
 
+        for RecordType in ["NS","AAAA","CNAME","TXT"]:
+            LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
+            LongestStingsRight.append(LongestStingInList)
+        LongestStingRight = len(max(LongestStingsRight, key=len))
+        print(LongestStingRight)
 
         RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
 
 
         table = Table()
         table.show_header = False
-        table.add_column(style="rgb(255,255,255)", no_wrap=True)
-        table.add_column(style="rgb(255,255,255)", no_wrap=True)
+        table.add_column(style="rgb(255,255,255)", no_wrap=True, min_width=LongestStingLeft+10)
+        table.add_column(style="rgb(255,255,255)", no_wrap=True, min_width=LongestStingRight+10)
         table.border_style = "rgb(255,255,255)"
 
-        table.min_width = LongestSting+10
 
         for RecordType1, RecordType2 in RecordTupsForTables:
             table.title_style = "bold"
 
-            SectionHeader1 = f"════════ {RecordType1} ════════"
-            SectionHeader2 = f"════════ {RecordType2} ════════"
+            SectionHeader1 = f"{'═'*int((LongestStingLeft+10)/2)} {RecordType1} {'═'*int((LongestStingLeft+10)/2)}"
+            SectionHeader2 = f"{'═'*int((LongestStingRight+10)/2)} {RecordType2} {'═'*int((LongestStingRight+10)/2)}"
 
             table.add_row(SectionHeader1, SectionHeader2)
             table.add_section()
 
             if len(LongestList) > 100:
-                for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:100], self.RecordsFiltered[RecordType2][:100]):
+                LenRecordType1 = RealLenDict[RecordType1]
+                LenRecordType2 = RealLenDict[RecordType2]
+
+                if LenRecordType1 < 100 and LenRecordType2 < 100:
+                    print("True!")
+                    DisplayRange = max(LenRecordType1, LenRecordType2)
+                else:
+                    DisplayRange = 100
+
+
+                for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:DisplayRange], self.RecordsFiltered[RecordType2][:DisplayRange]):
                     table.add_row(RecordType1Item, RecordType2Item)
+
                 table.add_row('', '')
 
-                NoLeftRowText = False
-                NoRightRowText = False
-
                 if RealLenDict[RecordType1] > 100:
-                    LeftRowText = f"{RealLenDict[RecordType1] - 100} More {RecordType1} records."
+                    LeftRowText = f"There are {RealLenDict[RecordType1] - DisplayRange} More {RecordType1} records."
                 else:
-                    NoLeftRowText = True
                     LeftRowText = ''
 
                 if RealLenDict[RecordType2] > 100:
-                    RightRowText = f"{RealLenDict[RecordType2] - 100} More {RecordType2} records."
+                    RightRowText = f"There are {RealLenDict[RecordType2] - DisplayRange} More {RecordType2} records."
                 else:
-                    NoRightRowText = True
                     RightRowText = ''
 
-                #if not NoLeftRowText == True and not NoRightRowText == True:
                 table.add_row("", "")
                 table.add_row(LeftRowText, RightRowText)
 
