@@ -1,11 +1,15 @@
 import requests
-from PyEnhance import WebTools,TextSets
+from PyEnhance import WebTools,TextSets, Stamps
 from bs4 import BeautifulSoup
 from pprint import pprint as Pprint
 import re
+from itertools import zip_longest
 
 from rich.console import Console
 from rich.table import Table
+
+Stamp = Stamps.Stamp
+
 class Main:
 
     def __init__(self, URL):
@@ -46,10 +50,21 @@ class Main:
 
         self.Filter()
 
+
+    def grouper(self,sequence, n, fillvalue=None): # Coded by ChatGPT
+        args = [iter(sequence)] * n
+        return [list(group) for group in zip_longest(*args, fillvalue=fillvalue)]
+
     def GetBasePageRecords(self, URL):
 
         WebRequest = requests.get(f'https://dnshistory.org/dns-records/{URL}', headers=self.WebTool.RequestHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
+
+        if WebRequest.status_code == 403:
+            print(f"{Stamp.Error} Request Blocked")
+            print(f"Request Status code: {WebRequest.status_code}")
+            exit()
+
 
         IndexsForSoups = []
         ListForSoups = []
@@ -167,14 +182,25 @@ class Main:
             "PTR":len(list(set(self.RecordsFiltered['PTR']))), "TXT":len(list(set(self.RecordsFiltered['TXT'])))
         }
 
+        self.NS_LessThen6 = False
+
         for RecordType in self.RecordTypes:
 
             if RecordType == "NS":
-                self.RecordsFiltered[RecordType].append('\n'.join(self.RecordsFiltered[RecordType]))
-                self.RecordsFiltered[RecordType] = self.RecordsFiltered[RecordType][-1:]
-                print(self.RecordsFiltered[RecordType])
-                for i in range(len(LongestList) - int(1)):
-                    self.RecordsFiltered[RecordType].append(" ")
+               if RealLenDict["NS"] < 6:
+                    self.NS_LessThen6 = True
+                    self.RecordsFiltered[RecordType].append('\n'.join(self.RecordsFiltered[RecordType]))
+                    self.RecordsFiltered[RecordType] = self.RecordsFiltered[RecordType][-1:]
+
+                    for i in range(len(LongestList) - RealLenDict["NS"]):
+                        self.RecordsFiltered[RecordType].append(" ")
+
+               else:
+                   GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 7, fillvalue=''))
+                   #GroupedList[0].insert(0,"\n")
+                   self.RecordsFiltered[RecordType] = GroupedList
+
+
             else:
                 for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
                     self.RecordsFiltered[RecordType] += [" "]
@@ -184,12 +210,21 @@ class Main:
 
         for RecordType in ["SOA","A","MX","PTR"]:
             LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
+            print(f"Longest String for Type {RecordType}: {LongestStingInList}")
             LongestStingsLeft.append(LongestStingInList)
         LongestStingLeft = len(max(LongestStingsLeft, key=len))
 
         for RecordType in ["NS","AAAA","CNAME","TXT"]:
-            LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
-            LongestStingsRight.append(LongestStingInList)
+
+
+            if RecordType == "NS": # Need To Add sets of 3 NS records in to lists this code will check the len of each list
+                LongestStingInList = max(self.RecordsFiltered[RecordType][0], key=len)
+                print(f"Longest String for Type {RecordType}: {LongestStingInList}")
+                LongestStingsRight.append(LongestStingInList)
+            else:
+                LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
+                print(f"Longest String for Type {RecordType}: {LongestStingInList}")
+                LongestStingsRight.append(LongestStingInList)
         LongestStingRight = len(max(LongestStingsRight, key=len))
 
         RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
@@ -276,10 +311,23 @@ class Main:
 
             table.add_row('', '')
 
-
+            if RecordType2 == "NS":
+                print(f"NS Records Dict: {self.RecordsFiltered[RecordType2]}")
 
             for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:DisplayRange], self.RecordsFiltered[RecordType2][:DisplayRange]):
-                table.add_row(RecordType1Item, RecordType2Item)
+
+                if RecordType2 == "NS":
+                    if not self.NS_LessThen6 == True:
+                        print(f"Record Type 2 Item: {RecordType2Item}")
+                        RecordType2Item = '\n'.join(RecordType2Item)
+                        table.add_row(RecordType1Item, RecordType2Item)
+                    else:
+                        table.add_row(RecordType1Item, RecordType2Item)
+
+
+
+                else:
+                    table.add_row(RecordType1Item, RecordType2Item)
 
             table.add_row('', '')
 
@@ -303,4 +351,8 @@ class Main:
         console = Console()
         console.print(table)
 
-Main(URL='google.org')
+
+
+
+#Main(URL='google.com')
+Main(URL='zippo.com')
