@@ -4,9 +4,12 @@ from bs4 import BeautifulSoup
 from pprint import pprint as Pprint
 import re
 from itertools import zip_longest
+import os
 
+from rich.align import Align
 from rich.console import Console
 from rich.table import Table
+import math
 
 Stamp = Stamps.Stamp
 
@@ -208,9 +211,14 @@ class Main:
         LongestStingsLeft = []
         LongestStingsRight = []
 
+        TermSize = os.get_terminal_size()
+
+        TermHeight = TermSize.columns
+        TermWidth = TermSize.lines
+
         for RecordType in ["SOA","A","MX","PTR"]:
             LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
-            print(f"Longest String for Type {RecordType}: {LongestStingInList}")
+            #print(f"Longest String for Type {RecordType}: {LongestStingInList}")
             LongestStingsLeft.append(LongestStingInList)
         LongestStingLeft = len(max(LongestStingsLeft, key=len))
 
@@ -219,20 +227,21 @@ class Main:
 
             if RecordType == "NS": # Need To Add sets of 3 NS records in to lists this code will check the len of each list
                 LongestStingInList = max(self.RecordsFiltered[RecordType][0], key=len)
-                print(f"Longest String for Type {RecordType}: {LongestStingInList}")
+                #print(f"Longest String for Type {RecordType}: {LongestStingInList}")
                 LongestStingsRight.append(LongestStingInList)
             else:
                 LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
-                print(f"Longest String for Type {RecordType}: {LongestStingInList}")
+                #print(f"Longest String for Type {RecordType}: {LongestStingInList}")
                 LongestStingsRight.append(LongestStingInList)
         LongestStingRight = len(max(LongestStingsRight, key=len))
 
         RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
 
+
         table = Table()
         table.show_header = False
-        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=LongestStingLeft+10)
-        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=LongestStingRight+10)
+        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=math.floor(TermHeight/2))
+        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=math.floor(TermHeight/2))
         table.border_style = "rgb(255,255,255)"
         table.title_style = "bold"
 
@@ -243,31 +252,26 @@ class Main:
             #    self.RecordsFiltered[RecordType2] = self.RecordsFiltered[RecordType2][:-1]
             #    print(self.RecordsFiltered[RecordType2])
 
-
             Section1HeaderText = f'{RecordType1} Records'
             Section2HeaderText = f'{RecordType2} Records'
 
             Section1HeaderTextLen = len(Section1HeaderText)
             Section2HeaderTextLen = len(Section2HeaderText)
 
-            LeftTableWidth = LongestStingLeft+10
-            RightTableWidth = LongestStingRight+10
+            LeftTableWidth = math.floor(TermHeight/2)
+            RightTableWidth = math.floor(TermHeight/2)
 
-            Section1HeaderSides = '═' * (round(LeftTableWidth/2-((Section1HeaderTextLen+1)/2)))
-            Section2HeaderSides = '═' * (round(RightTableWidth/2-((Section2HeaderTextLen+1)/2)))
+            LeftBufferInt = math.floor((LeftTableWidth-Section2HeaderTextLen)/2)
+            RightBufferInt = math.floor((RightTableWidth-Section1HeaderTextLen)/2)
 
+            Section1HeaderSides = '═' * (LeftBufferInt-4)
+            Section2HeaderSides = '═' * (RightBufferInt-4)
 
             SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides}"
             SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides}"
 
-            #print(f"Header 1 len: {len(SectionHeader1)}")
-            #print(f"Header 1 Table Width: {LongestStingLeft+10}")
 
-            #print(f"Header 2 len: {len(SectionHeader2)}")
-            #print(f"Header 2 Table Width: {LongestStingRight+10}")
-
-
-            if len(SectionHeader1) > LongestStingLeft+10:
+            if len(SectionHeader1) > LeftTableWidth:
                 Diff = len(SectionHeader1) - (LongestStingLeft+10)
                 #print(f"Diff: {Diff}")
                 if Diff == 1:
@@ -279,7 +283,7 @@ class Main:
                 #print(f"New Header 1 len: {len(SectionHeader1)}")
                 #print(f"New Header 1 Table Width: {LongestStingLeft+10}")
 
-            if len(SectionHeader2) > LongestStingRight+10:
+            if len(SectionHeader2) > RightTableWidth:
                 Diff = len(SectionHeader2) - (LongestStingRight+10)
                 #print(f"Diff: {Diff}")
                 if Diff == 1:
@@ -291,7 +295,7 @@ class Main:
                 #print(f"New Header 2 len: {len(SectionHeader2)}")
                 #print(f"New Header 2 Table Width: {LongestStingRight+10}")
 
-            table.add_row(SectionHeader1, SectionHeader2)
+            table.add_row(Align(SectionHeader1, align="center"), Align(SectionHeader2, align="center"))
             table.add_section()
 
 
@@ -312,13 +316,14 @@ class Main:
             table.add_row('', '')
 
             if RecordType2 == "NS":
-                print(f"NS Records Dict: {self.RecordsFiltered[RecordType2]}")
+                pass
+                #print(f"NS Records Dict: {self.RecordsFiltered[RecordType2]}")
 
             for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:DisplayRange], self.RecordsFiltered[RecordType2][:DisplayRange]):
 
                 if RecordType2 == "NS":
                     if not self.NS_LessThen6 == True:
-                        print(f"Record Type 2 Item: {RecordType2Item}")
+                        #print(f"Record Type 2 Item: {RecordType2Item}")
                         RecordType2Item = '\n'.join(RecordType2Item)
                         table.add_row(RecordType1Item, RecordType2Item)
                     else:
@@ -355,4 +360,4 @@ class Main:
 
 
 #Main(URL='google.com')
-Main(URL='zippo.com')
+Main(URL='facebook.com')
