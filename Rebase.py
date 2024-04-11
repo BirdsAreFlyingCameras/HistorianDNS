@@ -43,6 +43,25 @@ class Main:
             "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
             "wbr"
         ]
+        self.WebHeaders = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Referer": "https://www.google.com/",
+    "Connection": "keep-alive",
+    "DNT": "1",  # Do Not Track request header
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-User": "?1",
+    "Sec-Fetch-Dest": "document",
+    "Upgrade-Insecure-Requests": "1",
+    "Cache-Control": "max-age=0",
+    "Cookie": "NID=204=WqEzX3nYo...; 1P_JAR=2021-09-29-07; DV=oA4e8...;",
+    }
+
+
+
 
         for Tag in self.Tags:
             self.Replace.append(f'<{Tag}>')
@@ -80,7 +99,7 @@ class Main:
 
     def GetBasePageRecords(self, URL):
 
-        WebRequest = requests.get(f'https://dnshistory.org/dns-records/{URL}', headers=self.WebTool.RequestHeaders)
+        WebRequest = requests.get(f'https://dnshistory.org/dns-records/{URL}', headers=self.WebHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
 
         if WebRequest.status_code == 403:
@@ -94,8 +113,6 @@ class Main:
         ListForSoups = []
 
         RecordsContainers = WebRequestSoup.find_all('h3')
-
-        #print(RecordsContainers)
 
         for RecordType in RecordsContainers:
             IndexsForSoups.append(WebRequest.text.index(str(RecordType)))
@@ -115,8 +132,6 @@ class Main:
             Items = IterSoup.find_all('p')
 
             TagPattern = re.compile(r'</?\w*/?>')  # Matches any HTML tag
-
-            #print([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items])
 
             self.Records[DictGuide.get(Iter)].append(''.join([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items]).strip())
 
@@ -231,32 +246,13 @@ class Main:
                 for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
                     self.RecordsFiltered[RecordType] += [" "]
 
-        LongestStingsLeft = []
-        LongestStingsRight = []
-
         TermSize = os.get_terminal_size()
 
         TermHeight = TermSize.columns
         TermWidth = TermSize.lines
 
-        for RecordType in ["SOA","A","MX","PTR"]:
-            LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
-            #print(f"Longest String for Type {RecordType}: {LongestStingInList}")
-            LongestStingsLeft.append(LongestStingInList)
-        LongestStingLeft = len(max(LongestStingsLeft, key=len))
+        print(self.RecordsFiltered)
 
-        for RecordType in ["NS","AAAA","CNAME","TXT"]:
-
-
-            if RecordType == "NS": # Need To Add sets of 3 NS records in to lists this code will check the len of each list
-                LongestStingInList = max(self.RecordsFiltered[RecordType][0], key=len)
-                #print(f"Longest String for Type {RecordType}: {LongestStingInList}")
-                LongestStingsRight.append(LongestStingInList)
-            else:
-                LongestStingInList = max(self.RecordsFiltered[RecordType], key=len)
-                #print(f"Longest String for Type {RecordType}: {LongestStingInList}")
-                LongestStingsRight.append(LongestStingInList)
-        LongestStingRight = len(max(LongestStingsRight, key=len))
 
         RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
 
@@ -294,8 +290,10 @@ class Main:
             SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides}"
 
 
+            # ||| Start of code I will probably remove |||
+
             if len(SectionHeader1) > LeftTableWidth:
-                Diff = len(SectionHeader1) - (LongestStingLeft+10)
+                Diff = len(SectionHeader1) - (LeftTableWidth)
                 #print(f"Diff: {Diff}")
                 if Diff == 1:
                     SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides[:-1]}"
@@ -303,11 +301,9 @@ class Main:
                     Section1HeaderSides = Section1HeaderSides[:-int(Diff/2)]
                     SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides}"
 
-                #print(f"New Header 1 len: {len(SectionHeader1)}")
-                #print(f"New Header 1 Table Width: {LongestStingLeft+10}")
 
             if len(SectionHeader2) > RightTableWidth:
-                Diff = len(SectionHeader2) - (LongestStingRight+10)
+                Diff = len(SectionHeader2) - (RightTableWidth)
                 #print(f"Diff: {Diff}")
                 if Diff == 1:
                     SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides[:-1]}"
@@ -315,16 +311,18 @@ class Main:
                     Section2HeaderSides = Section2HeaderSides[:-int(Diff/2)]
                     SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides}"
 
-                #print(f"New Header 2 len: {len(SectionHeader2)}")
-                #print(f"New Header 2 Table Width: {LongestStingRight+10}")
+
+            # ||| End of code I will probably remove |||
 
             table.add_row(Align(SectionHeader1, align="center"), Align(SectionHeader2, align="center"))
             table.add_section()
 
 
-
             LenRecordType1 = RealLenDict[RecordType1]
             LenRecordType2 = RealLenDict[RecordType2]
+
+            print(LenRecordType1)
+            print(LenRecordType2)
 
             if LenRecordType1 < 100 and LenRecordType2 < 100:
                 DisplayRange = max(LenRecordType1, LenRecordType2)
@@ -607,6 +605,8 @@ class UI:
             self.UserOS = "Unknown"
             self.ClearScreenCommand = None
 
+        os.system(self.ClearScreenCommand)
+        print(f"{Stamp.Info} Checking for an internet connection")
         if self.InternetConnection() == False:
             RetryChoice = (f"{Stamp.Error} No internet connection try agian? [y/n]: ")
             if RetryChoice.lower() == "y" or RetryChoice.lower() == "yes":
@@ -638,7 +638,7 @@ class UI:
         if URL.startswith("http://"):
             URL = URL.replace("http://", "")
         print('\n')
-        print(f"{Stamp.Info} Starting search on URL {URL}")
+        print(f"{Stamp.Info} Starting search on url: {URL}")
 
         time.sleep(2)
 
