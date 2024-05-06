@@ -393,9 +393,10 @@ class Main:
                 RightRowText = ''
 
 
-            if  LeftRowText != '' and RightRowText != '':
+            if LeftRowText != '' or RightRowText != '':
                 table.add_row(LeftRowText, RightRowText)
-
+            if LeftRowText != '' and RightRowText != '':
+                table.add_row(LeftRowText, RightRowText)
 
             table.add_section() # Table Padding
 
@@ -428,7 +429,6 @@ class Main:
 
                     if not SaveFileName.endswith(".txt"):
                         SaveFileName = f"{SaveFileName}.txt"
-                    BannerNameForTXT = SaveFileName.replace(".txt", "")
 
                 elif PathAlreadyExistChoice == "3":
                     exit()
@@ -448,7 +448,6 @@ class Main:
 
                         if not SaveFileName.endswith(".txt"):
                             SaveFileName = f"{SaveFileName}.txt"
-                        BannerNameForTXT = SaveFileName.replace(".txt", "")
 
                     if PathAlreadyExistChoice == "3":
                         exit()
