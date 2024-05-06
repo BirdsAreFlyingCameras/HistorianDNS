@@ -16,8 +16,42 @@ import math
 Stamp = Stamps.Stamp
 
 class Main:
+    """
+    Class that handles DNS record retrieval for a given URL.
 
+    Attributes:
+        WebTool (WebTools.WebTools): Instance of WebTools class.
+        CheckingIfWebsiteWillBlockRequestLoading (Loading.Loading): Instance of Loading class for indicating that the script is checking if dnshistory.com will block the request.
+        GettingRecordsLoading (Loading.Loading): Instance of Loading class for indicating the status of record retrieval.
+
+        Replace (list): List of strings to replace in HTML tags.
+        SubDomains (list): List of subdomains.
+
+        Records (dict): Dictionary to store DNS records. Keys represent record types and values represent record data.
+
+        Tags (list): List of HTML tags.
+
+        RecordTypes (list): List of record types.
+
+        WebHeaders (dict): Dictionary of HTTP headers used for web requests.
+
+        URL (str): The URL of the website used to fetch its DNS records.
+
+        ClearScreenCommand (str): Command to clear the screen based on user OS.
+        UserOS (str): Operating system of the user.
+
+    Methods:
+        grouper(sequence, n, fillvalue=None): Groups the sequence into tuples of size n.
+        GetBasePageRecords(URL): Retrieves the base page records for the given URL.
+        GetHistory(URL, Type): Retrieves historical DNS records for the given URL and record type.
+        Filter(): Filters the DNS records based on certain conditions.
+    """
     def __init__(self, URL):
+        """
+        Initializes the object with the given URL.
+
+        :param URL: The URL of the website used to fetch its DNS records.
+        """
 
         self.WebTool = WebTools.WebTools()
         self.CheckingIfWebsiteWillBlockRequestLoading = Loading.Loading()
@@ -94,32 +128,41 @@ class Main:
         self.GetBasePageRecords(URL=URL)
 
         for RecordType in self.RecordTypes:
-            self.GetHistory(URL=URL, Type=RecordType.lower())
+            self.GetHistory(URL=URL, RecordType=RecordType.lower())
 
         self.Filter()
 
 
     def grouper(self,sequence, n, fillvalue=None): # Coded by ChatGPT
+        """
+        :param sequence: The input sequence to be grouped.
+        :param n: The number of elements in each group.
+        :param fillvalue: The value used to fill any missing elements in the last group if the input sequence is not divisible evenly by n.
+        :return: A list of grouped elements, where each group contains n elements from the input sequence. If the input sequence is not divisible evenly by n, the last group will be filled with fillvalue.
+        """
         args = [iter(sequence)] * n
         return [list(group) for group in zip_longest(*args, fillvalue=fillvalue)]
 
 
     def GetBasePageRecords(self, URL):
-
+        """
+        :param URL: The URL of the website used to fetch its DNS records.
+        :return: None
+        """
         WebRequest = requests.get(f'https://dnshistory.org/dns-records/{URL}', headers=self.WebHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
 
 
-        if WebRequest.status_code == 403: # If cloudflare captcha is returned
+        if WebRequest.status_code == 403: # Triggerd if a cloudflare captcha is returned
             self.CheckingIfWebsiteWillBlockRequestLoading.Stop()
             os.system(self.ClearScreenCommand)
             print(f"{Stamp.Error} Request Blocked, Status code: {WebRequest.status_code}")
             exit()
 
 
-        self.CheckingIfWebsiteWillBlockRequestLoading.Stop()
+        self.CheckingIfWebsiteWillBlockRequestLoading.Stop() # Stops loading indicator so a new one can be made
         os.system(self.ClearScreenCommand)
-        self.GettingRecordsLoading.Spin(Text="Getting Records")
+        self.GettingRecordsLoading.Spin(Text="Getting Records") # Makes a new loading indicator
 
 
         IndexsForSoups = []
@@ -131,15 +174,14 @@ class Main:
             IndexsForSoups.append(WebRequest.text.index(str(RecordType)))
 
         for Iter, Index in enumerate(IndexsForSoups):
-
-            if Iter+1 == len(IndexsForSoups): # Checks if current loop iteration is the last
+            if Iter+1 == len(IndexsForSoups):  # Checks if current loop iteration is the last and if it is brakes the loop
                 break
             else:
                 NextIndex = IndexsForSoups[Iter+1]
                 ListForSoups.append(WebRequest.text[Index:NextIndex])
 
 
-        DictGuide = {0:"SOA", 1:"NS", 2:"MX", 3:"A", 4:"AAAA", 5:"CNAME", 6:"PTR", 7:"TXT"}
+        DictGuide = {0:"SOA", 1:"NS", 2:"MX", 3:"A", 4:"AAAA", 5:"CNAME", 6:"PTR", 7:"TXT"} # Dict of DNS record types
 
         for Iter, PreSoup in enumerate(ListForSoups):
             IterSoup = BeautifulSoup(PreSoup, 'html.parser')
@@ -150,11 +192,11 @@ class Main:
             self.Records[DictGuide.get(Iter)].append(''.join([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items]).strip())
 
 
-    def GetHistory(self, URL, Type):
+    def GetHistory(self, URL, RecordType):
 
         DateRegex = re.compile("\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2}")
 
-        WebRequest = requests.get(f'https://dnshistory.org/historical-dns-records/{Type}/{URL}', headers=self.WebTool.RequestHeaders)
+        WebRequest = requests.get(f'https://dnshistory.org/historical-dns-records/{RecordType}/{URL}', headers=self.WebTool.RequestHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
 
         Content = WebRequestSoup.find_all("p")
@@ -172,15 +214,14 @@ class Main:
                 Index2 = Content[Index1:].index('</p>')
                 Index2 = int(Index1)+int(Index2)
                 Record = Content[Index1:Index2]
-
-                self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
+                self.Records[RecordType.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
                 break
 
             Index1 = Content.index(DataForIndex)
             Index2 = Content.index(IndexsForRecords[Iter+1])
             Record = Content[Index1:Index2]
 
-            self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
+            self.Records[RecordType.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
 
     def Filter(self):
 
@@ -198,7 +239,7 @@ class Main:
             self.RecordsToBeFiltered[RecordType] = re.split(DateRegex, ''.join(self.Records[RecordType]))
 
         for RecordType in self.RecordTypes:
-            for iter, Record in enumerate(self.RecordsToBeFiltered[RecordType]):
+            for IterCount, Record in enumerate(self.RecordsToBeFiltered[RecordType]):
                 
                 if Record != "":
                     Record = str(Record).replace('-&gt;', '⇒')
@@ -207,7 +248,7 @@ class Main:
 
                         Record = Record.replace('&lt;', "").replace('&gt;', '')
 
-                        if iter == 0 or iter == 1: # The first SOA record doesn't have the RName field
+                        if IterCount == 0 or IterCount == 1: # The first SOA record doesn't have the RName field
                             NewLineList = ["MName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
                         else:
                             NewLineList = ["MName:", "RName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
@@ -216,7 +257,7 @@ class Main:
                             NewLineIndex = Record.index(NewLine)
 
                             if NewLine == "MName:":
-                                if iter == 0 or iter == 1:
+                                if IterCount == 0 or IterCount == 1:
                                     Record = f"{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
                                 else:
                                     Record = f"\n{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
@@ -234,12 +275,12 @@ class Main:
 
     def Output(self):
 
-        self.GettingRecordsLoading.Stop()
+        self.GettingRecordsLoading.Stop() # Stops loading indicator
         os.system(self.ClearScreenCommand)
 
         LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
 
-        RealLenDict = {
+        RealLenDict = {  # Need this due to the code below that will even out the lists so that they are all of equal length this dictionary is used to compare list length post equalization
             "SOA":len(self.RecordsFiltered['SOA']), "NS":len(self.RecordsFiltered['NS']), "MX":len(self.RecordsFiltered['MX']),
             "A":len(self.RecordsFiltered['A']), "AAAA":len(self.RecordsFiltered['AAAA']), "CNAME":len(self.RecordsFiltered['CNAME']),
             "PTR":len(self.RecordsFiltered['PTR']), "TXT":len(self.RecordsFiltered['TXT'])
@@ -248,8 +289,8 @@ class Main:
         self.NS_LessThen6 = False
 
         for IterCount, RecordType in enumerate(self.RecordTypes):
-            if RecordType == "NS":
-                
+
+            if RecordType == "NS":  # This code is used to group NS records so they take up the same amount of lines as the corresponding SOA record
                if RealLenDict["NS"] < 6:
 
                     self.NS_LessThen6 = True
@@ -260,7 +301,7 @@ class Main:
                         self.RecordsFiltered[RecordType].append(" ")
 
                else:
-                    if IterCount == 0:
+                    if IterCount == 0: # Need to check this because the first SOA record is only 6 lines
                        GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 6, fillvalue=''))
                        self.RecordsFiltered[RecordType] = GroupedList
                     else:
@@ -328,6 +369,8 @@ class Main:
 
             table.add_row(Align(SectionHeader1, align="center"), Align(SectionHeader2, align="center"))
             table.add_section()
+
+
 
 
             LenRecordType1 = RealLenDict[RecordType1]
@@ -591,6 +634,15 @@ class Main:
             exit()
 
 class UI:
+    """
+    This class represents the user interface for a program.
+    It provides methods to check for an internet connection,
+    get user input and start the main program.
+
+    Attributes:
+        ClearScreenCommand (str): The command to clear the screen based on the user's operating system.
+        UserOS (str): The user's operating system.
+    """
     def __init__(self):
         self.ClearScreenCommand = None
         if platform.system() == "Windows":
