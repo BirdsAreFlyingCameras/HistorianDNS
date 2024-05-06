@@ -1,13 +1,12 @@
 import platform
 import time
 import requests
-from PyEnhance import WebTools, TextSets, Stamps, Loading
+from PyEnhance import WebTools, Stamps, Loading
 from bs4 import BeautifulSoup
-from pprint import pprint as Pprint
 import re
 from itertools import zip_longest
 import os
-
+import sys, locale
 from rich.align import Align
 from rich.console import Console
 from rich.table import Table
@@ -120,18 +119,38 @@ class Main:
             self.ClearScreenCommand = None
 
 
-        self.CheckingIfWebsiteWillBlockRequestLoading.Spin(Text="Checking If Request Will Be Blocked")
+        if self.UserOS == "Windows":
+            WinTerm = self.ShellIsWinTerm()
+            if WinTerm is False:
+                self.UnicodeSupported = False
+            else:
+                self.UnicodeSupported = True
+        else:
+            self.UnicodeSupported = True
+
+
+        self.CheckingIfWebsiteWillBlockRequestLoading.Spin(Text="Checking If Request Will Be Blocked") # Starts Loading indicator
         
         
         #Function Calls
-        
+
         self.GetBasePageRecords(URL=URL)
+
 
         for RecordType in self.RecordTypes:
             self.GetHistory(URL=URL, RecordType=RecordType.lower())
 
+
         self.Filter()
 
+    def ShellIsWinTerm(self) -> bool:
+
+        is_windows_terminal = sys.platform == "win32" and os.environ.get("WT_SESSION")
+
+        if is_windows_terminal is None:
+            return False
+        else:
+            return True
 
     def grouper(self,sequence, n, fillvalue=None): # Coded by ChatGPT
         """
@@ -165,19 +184,19 @@ class Main:
         self.GettingRecordsLoading.Spin(Text="Getting Records") # Makes a new loading indicator
 
 
-        IndexsForSoups = []
+        IndexesForSoups = []
         ListForSoups = []
 
         RecordsContainers = WebRequestSoup.find_all('h3')
 
         for RecordType in RecordsContainers:
-            IndexsForSoups.append(WebRequest.text.index(str(RecordType)))
+            IndexesForSoups.append(WebRequest.text.index(str(RecordType)))
 
-        for Iter, Index in enumerate(IndexsForSoups):
-            if Iter+1 == len(IndexsForSoups):  # Checks if current loop iteration is the last and if it is brakes the loop
+        for Iter, Index in enumerate(IndexesForSoups):
+            if Iter+1 == len(IndexesForSoups):  # Checks if current loop iteration is the last and if it is brakes the loop
                 break
             else:
-                NextIndex = IndexsForSoups[Iter+1]
+                NextIndex = IndexesForSoups[Iter+1]
                 ListForSoups.append(WebRequest.text[Index:NextIndex])
 
 
@@ -201,15 +220,15 @@ class Main:
 
         Content = WebRequestSoup.find_all("p")
 
-        IndexsForRecords = re.findall(DateRegex, str(Content))
+        IndexesForRecords = re.findall(DateRegex, str(Content))
 
         Content = str(Content)
 
         TagPattern = re.compile(r'</?\w*/?>')  # Matches any HTML tag
 
-        for Iter, DataForIndex in enumerate(IndexsForRecords):
+        for Iter, DataForIndex in enumerate(IndexesForRecords):
 
-            if Iter+1 == len(IndexsForRecords): # Checks if current loop iteration is the last
+            if Iter+1 == len(IndexesForRecords): # Checks if current loop iteration is the last
                 Index1 = Content.index(DataForIndex)
                 Index2 = Content[Index1:].index('</p>')
                 Index2 = int(Index1)+int(Index2)
@@ -218,7 +237,7 @@ class Main:
                 break
 
             Index1 = Content.index(DataForIndex)
-            Index2 = Content.index(IndexsForRecords[Iter+1])
+            Index2 = Content.index(IndexesForRecords[Iter+1])
             Record = Content[Index1:Index2]
 
             self.Records[RecordType.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
@@ -242,7 +261,10 @@ class Main:
             for IterCount, Record in enumerate(self.RecordsToBeFiltered[RecordType]):
                 
                 if Record != "":
-                    Record = str(Record).replace('-&gt;', '⇒')
+                    if self.UnicodeSupported is True:
+                        Record = str(Record).replace('-&gt;', '⇒')
+                    else:
+                        Record = str(Record).replace('-&gt;', '->')
 
                     if RecordType == "SOA":
 
@@ -349,7 +371,7 @@ class Main:
             # ||| Start of code I will probably remove |||
 
             if len(SectionHeader1) > LeftColumnWidth:
-                Diff = len(SectionHeader1) - (LeftColumnWidth)
+                Diff = len(SectionHeader1) - LeftColumnWidth
                 if Diff == 1:
                     SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides[:-1]}"
                 else:
@@ -357,7 +379,7 @@ class Main:
                     SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides}"
 
             if len(SectionHeader2) > RightColumnWidth:
-                Diff = len(SectionHeader2) - (RightColumnWidth)
+                Diff = len(SectionHeader2) - RightColumnWidth
                 if Diff == 1:
                     SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides[:-1]}"
                 else:
@@ -428,210 +450,221 @@ class Main:
 
     def SaveResults(self):
 
-        print('\n')
+            def SaveFileNameHandling():
+                SaveFileName = f"HistorianDNS-{self.URL}.txt"
 
-        SaveResultsChoice = input(f"{Stamps.Stamp.Input} Save Results [y/n]: ")
-
-        if SaveResultsChoice == "y" or SaveResultsChoice == "Y" or SaveResultsChoice == "yes" or SaveResultsChoice == "Yes":
-
-            SaveFileName = f"HistorianDNS-{self.URL}.txt"
-
-            if os.path.exists(SaveFileName):
-                print("\n")
-                PathAlreadyExistChoice = input(f'{Stamps.Stamp.Error} A file with the name {SaveFileName} already exists. Over Write File [1] | Change Save File Name [2] | Exit [3]: ')
-
-                if PathAlreadyExistChoice == "1":
-                    os.remove(SaveFileName)
-
-                elif PathAlreadyExistChoice == "2":
-                    print("\n")
-                    SaveFileName = input(f"{Stamps.Stamp.Input} New File Name: ")
-
-                    if not SaveFileName.endswith(".txt"):
-                        SaveFileName = f"{SaveFileName}.txt"
-
-                elif PathAlreadyExistChoice == "3":
-                    exit()
-
-                else:
-                    print('\n')
-                    print(f"{Stamps.Stamp.Error} Invalid Choice")
+                if os.path.exists(SaveFileName):
                     print("\n")
                     PathAlreadyExistChoice = input(f'{Stamps.Stamp.Error} A file with the name {SaveFileName} already exists. Over Write File [1] | Change Save File Name [2] | Exit [3]: ')
 
                     if PathAlreadyExistChoice == "1":
                         os.remove(SaveFileName)
+                        MakeTXT(SaveFileName=SaveFileName)
 
-                    if PathAlreadyExistChoice == "2":
+                    elif PathAlreadyExistChoice == "2":
                         print("\n")
                         SaveFileName = input(f"{Stamps.Stamp.Input} New File Name: ")
 
                         if not SaveFileName.endswith(".txt"):
                             SaveFileName = f"{SaveFileName}.txt"
 
-                    if PathAlreadyExistChoice == "3":
+                        MakeTXT(SaveFileName=SaveFileName)
+
+                    elif PathAlreadyExistChoice == "3":
+                        print(f"{Stamp.Info} Exiting...")
                         exit()
 
-            BannerNameForTXT = SaveFileName.replace(".txt", "")
+                    else:
+                        print('\n')
+                        print(f"{Stamps.Stamp.Error} Invalid Choice")
+                        print("\n")
+                        PathAlreadyExistChoice = input(f'{Stamps.Stamp.Error} A file with the name {SaveFileName} already exists. Over Write File [1] | Change Save File Name [2] | Exit [3]: ')
 
-            with open(SaveFileName, 'x', encoding='utf-8') as f:
+                        if PathAlreadyExistChoice == "1":
+                            os.remove(SaveFileName)
+                            MakeTXT(SaveFileName=SaveFileName)
 
-                f.write(f"┣━━━━━━━━━━ HistorianDNS Results for {BannerNameForTXT} ━━━━━━━━━━┫")
+                        if PathAlreadyExistChoice == "2":
+                            print("\n")
+                            SaveFileName = input(f"{Stamps.Stamp.Input} New File Name: ")
 
-                f.write('\n')
-                f.write('\n')
-                f.write('\n')
+                            if not SaveFileName.endswith(".txt"):
+                                SaveFileName = f"{SaveFileName}.txt"
+                            MakeTXT(SaveFileName=SaveFileName)
 
-                f.write('━━━━━┫ SOA Records ┣━━━━━')
+                        if PathAlreadyExistChoice == "3":
+                            print(f"{Stamp.Info} Exiting...")
+                            exit()
 
-                f.write('\n')
-                f.write('\n')
+            def MakeTXT(SaveFileName:str):
 
-                if not self.RecordsFiltered.get('SOA') == 0:
-                    for SOA in self.RecordsFiltered.get('SOA'):
-                        if not SOA == " ":
-                            f.write(SOA)
-                            f.write('\n')
+                BannerNameForTXT = SaveFileName.replace(".txt", "")
 
+                with open(SaveFileName, 'x', encoding='utf-8') as f:
+
+                    f.write(f"┣━━━━━━━━━━ HistorianDNS Results for {BannerNameForTXT} ━━━━━━━━━━┫")
+
+                    f.write('\n')
+                    f.write('\n')
+                    f.write('\n')
+
+                    f.write('━━━━━┫ SOA Records ┣━━━━━')
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    if self.RecordsFiltered.get('SOA') != 0:
+                        for SOA in self.RecordsFiltered.get('SOA'):
+                            if SOA != " ":
+                                f.write(SOA)
+                                f.write('\n')
+
+                    else:
+                        f.write("No SOA Records Found")
+
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    f.write('━━━━━┫ NS Records ┣━━━━━')
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    if self.RecordsFiltered.get('NS') != 0:
+                        for NS in self.RecordsFiltered.get('NS'):
+                            if NS != " ":
+                                f.write(SOA)
+                                f.write('\n')
+
+                    else:
+                        f.write("No NS Records Found")
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    f.write('━━━━━┫ A Records ┣━━━━━')
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    if self.RecordsFiltered.get('A') != 0:
+                        for A in self.RecordsFiltered.get('A'):
+                            if A != " ":
+                                f.write(A)
+                                f.write('\n')
+
+                    else:
+                        f.write("No A Records Found")
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    f.write('━━━━━┫ AAAA Records ┣━━━━━')
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    if self.RecordsFiltered.get('AAAA') != 0:
+                        for AAAA in self.RecordsFiltered.get('AAAA'):
+                            if AAAA != " ":
+                                f.write(AAAA)
+                                f.write('\n')
+
+                    else:
+                        f.write("No AAAA Records Found")
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    f.write('━━━━━┫ MX Records ┣━━━━━')
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    if self.RecordsFiltered.get('MX') != 0:
+                        for MX in self.RecordsFiltered.get('MX'):
+                            if MX != " ":
+                                f.write(MX)
+                                f.write('\n')
+
+                    else:
+                        f.write("No MX Records Found")
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    f.write('━━━━━┫ CNAME Records ┣━━━━━')
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    if self.RecordsFiltered.get('CNAME') != 0:
+                        for CNAME in self.RecordsFiltered.get('CNAME'):
+                            if CNAME != " ":
+                                f.write(CNAME)
+                                f.write('\n')
+
+                    else:
+                        f.write("No CNAME Records Found")
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    f.write('━━━━━┫ PTR Records ┣━━━━━')
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    if self.RecordsFiltered.get('PTR') != 0:
+                        for PTR in self.RecordsFiltered.get('PTR'):
+                            if PTR != " ":
+                                f.write(PTR)
+                                f.write('\n')
+
+                    else:
+                        f.write("No PTR Records Found")
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    f.write('━━━━━┫ TXT Records ┣━━━━━')
+
+                    f.write('\n')
+                    f.write('\n')
+
+                    if self.RecordsFiltered.get('TXT') != 0:
+                        for TXT in self.RecordsFiltered.get('TXT'):
+                            if TXT != " ":
+                                f.write(TXT)
+                                f.write('\n')
+
+                    else:
+                        f.write("No TXT Records Found")
+
+                    f.write('\n')
+
+                if self.UserOS == "Linux" or self.UserOS == "MacOS" or self.UserOS == "Unknown":
+                    print('\n')
+                    print(f"{Stamps.Stamp.Output} Saved Results to {os.path.dirname(os.path.abspath(__file__))}/{SaveFileName}")
+                    print('\n')
+                    print(f"{Stamps.Stamp.Info} Exiting")
                 else:
-                    f.write("No SOA Records Found")
+                    print('\n')
+                    print(f"{Stamps.Stamp.Output} Saved Results to {os.path.dirname(os.path.abspath(__file__))}\\{SaveFileName}")
+                    print('\n')
+                    print(f"{Stamps.Stamp.Info} Exiting")
 
 
-                f.write('\n')
-                f.write('\n')
 
-                f.write('━━━━━┫ NS Records ┣━━━━━')
-
-                f.write('\n')
-                f.write('\n')
-
-                if not self.RecordsFiltered.get('NS') == 0:
-                    for NS in self.RecordsFiltered.get('NS'):
-                        if not NS == " ":
-                            f.write(SOA)
-                            f.write('\n')
-
-                else:
-                    f.write("No NS Records Found")
-
-                f.write('\n')
-                f.write('\n')
-
-                f.write('━━━━━┫ A Records ┣━━━━━')
-
-                f.write('\n')
-                f.write('\n')
-
-                if not self.RecordsFiltered.get('A') == 0:
-                    for A in self.RecordsFiltered.get('A'):
-                        if not A == " ":
-                            f.write(A)
-                            f.write('\n')
-
-                else:
-                    f.write("No A Records Found")
-
-                f.write('\n')
-                f.write('\n')
-
-                f.write('━━━━━┫ AAAA Records ┣━━━━━')
-
-                f.write('\n')
-                f.write('\n')
-
-                if not self.RecordsFiltered.get('AAAA') == 0:
-                    for AAAA in self.RecordsFiltered.get('AAAA'):
-                        if not AAAA == " ":
-                            f.write(AAAA)
-                            f.write('\n')
-
-                else:
-                    f.write("No AAAA Records Found")
-
-                f.write('\n')
-                f.write('\n')
-
-                f.write('━━━━━┫ MX Records ┣━━━━━')
-
-                f.write('\n')
-                f.write('\n')
-
-                if not self.RecordsFiltered.get('MX') == 0:
-                    for MX in self.RecordsFiltered.get('MX'):
-                        if not MX == " ":
-                            f.write(MX)
-                            f.write('\n')
-
-                else:
-                    f.write("No MX Records Found")
-
-                f.write('\n')
-                f.write('\n')
-
-                f.write('━━━━━┫ CNAME Records ┣━━━━━')
-
-                f.write('\n')
-                f.write('\n')
-
-                if not self.RecordsFiltered.get('CNAME') == 0:
-                    for CNAME in self.RecordsFiltered.get('CNAME'):
-                        if not CNAME == " ":
-                            f.write(CNAME)
-                            f.write('\n')
-
-                else:
-                    f.write("No CNAME Records Found")
-
-                f.write('\n')
-                f.write('\n')
-
-                f.write('━━━━━┫ PTR Records ┣━━━━━')
-
-                f.write('\n')
-                f.write('\n')
-
-                if not self.RecordsFiltered.get('PTR') == 0:
-                    for PTR in self.RecordsFiltered.get('PTR'):
-                        if not PTR == " ":
-                            f.write(PTR)
-                            f.write('\n')
-
-                else:
-                    f.write("No PTR Records Found")
-
-                f.write('\n')
-                f.write('\n')
-
-                f.write('━━━━━┫ TXT Records ┣━━━━━')
-
-                f.write('\n')
-                f.write('\n')
-
-                if not self.RecordsFiltered.get('TXT') == 0:
-                    for TXT in self.RecordsFiltered.get('TXT'):
-                        if not TXT == " ":
-                            f.write(TXT)
-                            f.write('\n')
-
-                else:
-                    f.write("No TXT Records Found")
-
-                f.write('\n')
-
-            if self.UserOS == "Linux" or self.UserOS == "MacOS" or self.UserOS == "Unknown":
-                print('\n')
-                print(f"{Stamps.Stamp.Output} Saved Results to {os.path.dirname(os.path.abspath(__file__))}/{SaveFileName}")
-                print('\n')
-                print(f"{Stamps.Stamp.Info} Exiting")
+            print('\n')
+            SaveResultsChoice = input(f"{Stamps.Stamp.Input} Save Results [y/n]: ")
+            if SaveResultsChoice == "y" or SaveResultsChoice == "Y" or SaveResultsChoice == "yes" or SaveResultsChoice == "Yes":
+                SaveFileNameHandling()
             else:
                 print('\n')
-                print(f"{Stamps.Stamp.Output} Saved Results to {os.path.dirname(os.path.abspath(__file__))}\\{SaveFileName}")
-                print('\n')
                 print(f"{Stamps.Stamp.Info} Exiting")
-        else:
-            print('\n')
-            print(f"{Stamps.Stamp.Info} Exiting")
-            exit()
+                exit()
 
 class UI:
     """
@@ -661,7 +694,7 @@ class UI:
         os.system(self.ClearScreenCommand)
         print(f"{Stamp.Info} Checking for an internet connection")
         if self.InternetConnection() == False:
-            RetryChoice = (f"{Stamp.Error} No internet connection try agian? [y/n]: ")
+            RetryChoice = (f"{Stamp.Error} No internet connection try again? [y/n]: ")
             if RetryChoice.lower() == "y" or RetryChoice.lower() == "yes":
                 print('\n')
                 if self.InternetConnection() == False:
@@ -679,7 +712,6 @@ class UI:
         try:
             requests.get('https://google.com')
             return True
-
         except:
             return False
 
