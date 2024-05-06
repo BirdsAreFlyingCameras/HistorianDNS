@@ -51,6 +51,7 @@ class Main:
 
         :param URL: The URL of the website used to fetch its DNS records.
         """
+        self.URL = URL
 
         self.WebTool = WebTools.WebTools()
         self.CheckingIfWebsiteWillBlockRequestLoading = Loading.Loading()
@@ -97,8 +98,6 @@ class Main:
             "Cookie": "sessionId=eyJpdiI6IklDVkZuQmFcL3NcLzN4Z1wvTmFcLzNnPT0iLCJ2YWx1ZSI6IlwvT1wvUnRQOHhcLzE2NGJcL1wvXC9cLzBcL1wvXC8wK3c9PSIsIm1hYyI6IjlkYzBmYWM1MjJlZjQ4MzI5YjFjNzg3MTQ0NjQ5ZDMwOTBiMjJhOWFjY2M2MzZiNTY5ZDgwN2E4YWE2NzE4YTEifQ%3D%3D; theme=light; csrftoken=ghPx4Dr56TjYVbnP5rSzG5hajkLQzN7b;"
         }
 
-        self.URL = URL
-
         for Tag in self.Tags:
             self.Replace.append(f'<{Tag}>')
             self.Replace.append(f'</{Tag}>')
@@ -129,30 +128,30 @@ class Main:
             self.UnicodeSupported = True
 
 
-        self.CheckingIfWebsiteWillBlockRequestLoading.Spin(Text="Checking If Request Will Be Blocked") # Starts Loading indicator
-        
         
         #Function Calls
 
-        self.GetBasePageRecords(URL=URL)
+        self.CheckingIfWebsiteWillBlockRequestLoading.Spin(Text="Checking If Request Will Be Blocked") # Starts Loading indicator
 
+        self.GetBasePageRecords(URL=URL)
 
         for RecordType in self.RecordTypes:
             self.GetHistory(URL=URL, RecordType=RecordType.lower())
 
-
         self.Filter()
 
-    def ShellIsWinTerm(self) -> bool:
 
-        is_windows_terminal = sys.platform == "win32" and os.environ.get("WT_SESSION")
 
-        if is_windows_terminal is None:
+    def ShellIsWinTerm(self) -> bool: # Checks if users shell is the Windows Terminal. Need to do this due to cmd being unable to display the unicode arrow used for the output table.
+
+        is_windows_terminal = sys.platform == "win32" and os.environ.get("WT_SESSION") # Got this snippet from Stack Overflow (https://stackoverflow.com/questions/62878172/how-do-i-detect-if-my-python-script-is-running-in-the-windows-terminal)
+
+        if is_windows_terminal is None: # Will return none if shell is not Windows Terminal
             return False
         else:
             return True
 
-    def grouper(self,sequence, n, fillvalue=None): # Coded by ChatGPT
+    def grouper(self,sequence, n, fillvalue=None) -> list: # Coded by ChatGPT
         """
         :param sequence: The input sequence to be grouped.
         :param n: The number of elements in each group.
@@ -163,7 +162,7 @@ class Main:
         return [list(group) for group in zip_longest(*args, fillvalue=fillvalue)]
 
 
-    def GetBasePageRecords(self, URL):
+    def GetBasePageRecords(self, URL:str):
         """
         :param URL: The URL of the website used to fetch its DNS records.
         :return: None
@@ -171,13 +170,11 @@ class Main:
         WebRequest = requests.get(f'https://dnshistory.org/dns-records/{URL}', headers=self.WebHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
 
-
-        if WebRequest.status_code == 403: # Triggerd if a cloudflare captcha is returned
+        if WebRequest.status_code == 403: # Triggerd if a CloudFlare captcha is returned
             self.CheckingIfWebsiteWillBlockRequestLoading.Stop()
             os.system(self.ClearScreenCommand)
             print(f"{Stamp.Error} Request Blocked, Status code: {WebRequest.status_code}")
             exit()
-
 
         self.CheckingIfWebsiteWillBlockRequestLoading.Stop() # Stops loading indicator so a new one can be made
         os.system(self.ClearScreenCommand)
@@ -211,16 +208,26 @@ class Main:
             self.Records[DictGuide.get(Iter)].append(''.join([TagPattern.sub('', str(Item).replace('\n', ' ')) for Item in Items]).strip())
 
 
-    def GetHistory(self, URL, RecordType):
+    def GetHistory(self, URL:str, RecordType:str):
 
-        DateRegex = re.compile("\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2}")
+        """
+        Get historical DNS records for a given URL and record type.
+
+        :param URL: The URL for which to retrieve the historical DNS records.
+        :type URL: str
+        :param RecordType: The type of DNS record to retrieve (e.g., A, CNAME, MX).
+        :type RecordType: str
+        :return: None
+        """
+
+        DateRegex = re.compile("\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2}") # Regex for finding dates in html code
 
         WebRequest = requests.get(f'https://dnshistory.org/historical-dns-records/{RecordType}/{URL}', headers=self.WebTool.RequestHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
 
         Content = WebRequestSoup.find_all("p")
 
-        IndexesForRecords = re.findall(DateRegex, str(Content))
+        IndexesForRecords = re.findall(DateRegex, str(Content)) # Returns a list of indexes where the DateRegex was matched.
 
         Content = str(Content)
 
@@ -236,9 +243,9 @@ class Main:
                 self.Records[RecordType.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
                 break
 
-            Index1 = Content.index(DataForIndex)
-            Index2 = Content.index(IndexesForRecords[Iter+1])
-            Record = Content[Index1:Index2]
+            Index1 = Content.index(DataForIndex) # Index where DateRegex was matched
+            Index2 = Content.index(IndexesForRecords[Iter+1]) # Index of next DateRegex match
+            Record = Content[Index1:Index2] # This gets the full record. This works because
 
             self.Records[RecordType.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
 
@@ -313,22 +320,21 @@ class Main:
         for IterCount, RecordType in enumerate(self.RecordTypes):
 
             if RecordType == "NS":  # This code is used to group NS records so they take up the same amount of lines as the corresponding SOA record
-               if RealLenDict["NS"] < 6:
 
-                    self.NS_LessThen6 = True
-                    self.RecordsFiltered[RecordType].append('\n'.join(self.RecordsFiltered[RecordType]))
-                    self.RecordsFiltered[RecordType] = self.RecordsFiltered[RecordType][-1:]
+                if RealLenDict["NS"] < 6:
+                     self.NS_LessThen6 = True
+                     self.RecordsFiltered[RecordType].append('\n'.join(self.RecordsFiltered[RecordType]))
+                     self.RecordsFiltered[RecordType] = self.RecordsFiltered[RecordType][-1:]
 
-                    for _ in range(len(LongestList) - RealLenDict["NS"]):
-                        self.RecordsFiltered[RecordType].append(" ")
-
-               else:
-                    if IterCount == 0: # Need to check this because the first SOA record is only 6 lines
-                       GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 6, fillvalue=''))
-                       self.RecordsFiltered[RecordType] = GroupedList
-                    else:
-                        GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 7, fillvalue=''))
+                     for _ in range(len(LongestList) - RealLenDict["NS"]):
+                         self.RecordsFiltered[RecordType].append(" ")
+                else:
+                     if IterCount == 0: # Need to check this because the first SOA record is only 6 lines
+                        GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 6, fillvalue=''))
                         self.RecordsFiltered[RecordType] = GroupedList
+                     else:
+                         GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 7, fillvalue=''))
+                         self.RecordsFiltered[RecordType] = GroupedList
 
             else:
                 for _ in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
@@ -388,12 +394,8 @@ class Main:
 
             # ||| End of code I will probably remove |||
 
-
             table.add_row(Align(SectionHeader1, align="center"), Align(SectionHeader2, align="center"))
             table.add_section()
-
-
-
 
             LenRecordType1 = RealLenDict[RecordType1]
             LenRecordType2 = RealLenDict[RecordType2]
@@ -436,7 +438,6 @@ class Main:
             else:
                 RightRowText = ''
 
-
             if LeftRowText != '' or RightRowText != '' or LeftRowText != '' and RightRowText != '':
                 table.add_row(LeftRowText, RightRowText)
 
@@ -449,52 +450,6 @@ class Main:
 
 
     def SaveResults(self):
-
-            def SaveFileNameHandling():
-                SaveFileName = f"HistorianDNS-{self.URL}.txt"
-
-                if os.path.exists(SaveFileName):
-                    print("\n")
-                    PathAlreadyExistChoice = input(f'{Stamps.Stamp.Error} A file with the name {SaveFileName} already exists. Over Write File [1] | Change Save File Name [2] | Exit [3]: ')
-
-                    if PathAlreadyExistChoice == "1":
-                        os.remove(SaveFileName)
-                        MakeTXT(SaveFileName=SaveFileName)
-
-                    elif PathAlreadyExistChoice == "2":
-                        print("\n")
-                        SaveFileName = input(f"{Stamps.Stamp.Input} New File Name: ")
-
-                        if not SaveFileName.endswith(".txt"):
-                            SaveFileName = f"{SaveFileName}.txt"
-
-                        MakeTXT(SaveFileName=SaveFileName)
-
-                    elif PathAlreadyExistChoice == "3":
-                        print(f"{Stamp.Info} Exiting...")
-                        exit()
-
-                    else:
-                        print('\n')
-                        print(f"{Stamps.Stamp.Error} Invalid Choice")
-                        print("\n")
-                        PathAlreadyExistChoice = input(f'{Stamps.Stamp.Error} A file with the name {SaveFileName} already exists. Over Write File [1] | Change Save File Name [2] | Exit [3]: ')
-
-                        if PathAlreadyExistChoice == "1":
-                            os.remove(SaveFileName)
-                            MakeTXT(SaveFileName=SaveFileName)
-
-                        if PathAlreadyExistChoice == "2":
-                            print("\n")
-                            SaveFileName = input(f"{Stamps.Stamp.Input} New File Name: ")
-
-                            if not SaveFileName.endswith(".txt"):
-                                SaveFileName = f"{SaveFileName}.txt"
-                            MakeTXT(SaveFileName=SaveFileName)
-
-                        if PathAlreadyExistChoice == "3":
-                            print(f"{Stamp.Info} Exiting...")
-                            exit()
 
             def MakeTXT(SaveFileName:str):
 
@@ -518,7 +473,6 @@ class Main:
                             if SOA != " ":
                                 f.write(SOA)
                                 f.write('\n')
-
                     else:
                         f.write("No SOA Records Found")
 
@@ -553,7 +507,6 @@ class Main:
                             if A != " ":
                                 f.write(A)
                                 f.write('\n')
-
                     else:
                         f.write("No A Records Found")
 
@@ -654,8 +607,53 @@ class Main:
                     print(f"{Stamps.Stamp.Output} Saved Results to {os.path.dirname(os.path.abspath(__file__))}\\{SaveFileName}")
                     print('\n')
                     print(f"{Stamps.Stamp.Info} Exiting")
+            def SaveFileNameHandling():
+                SaveFileName = f"HistorianDNS-{self.URL}.txt"
 
+                if os.path.exists(SaveFileName):
+                    print("\n")
+                    PathAlreadyExistChoice = input(f'{Stamps.Stamp.Error} A file with the name {SaveFileName} already exists. Over Write File [1] | Change Save File Name [2] | Exit [3]: ')
 
+                    if PathAlreadyExistChoice == "1":
+                        os.remove(SaveFileName)
+                        MakeTXT(SaveFileName=SaveFileName)
+
+                    elif PathAlreadyExistChoice == "2":
+                        print("\n")
+                        SaveFileName = input(f"{Stamps.Stamp.Input} New File Name: ")
+
+                        if not SaveFileName.endswith(".txt"):
+                            SaveFileName = f"{SaveFileName}.txt"
+
+                        MakeTXT(SaveFileName=SaveFileName)
+
+                    elif PathAlreadyExistChoice == "3":
+                        print(f"{Stamp.Info} Exiting...")
+                        exit()
+
+                    else:
+                        print('\n')
+                        print(f"{Stamps.Stamp.Error} Invalid Choice")
+                        print("\n")
+                        PathAlreadyExistChoice = input(f'{Stamps.Stamp.Error} A file with the name {SaveFileName} already exists. Over Write File [1] | Change Save File Name [2] | Exit [3]: ')
+
+                        if PathAlreadyExistChoice == "1":
+                            os.remove(SaveFileName)
+                            MakeTXT(SaveFileName=SaveFileName)
+
+                        if PathAlreadyExistChoice == "2":
+                            print("\n")
+                            SaveFileName = input(f"{Stamps.Stamp.Input} New File Name: ")
+
+                            if not SaveFileName.endswith(".txt"):
+                                SaveFileName = f"{SaveFileName}.txt"
+                            MakeTXT(SaveFileName=SaveFileName)
+
+                        if PathAlreadyExistChoice == "3":
+                            print(f"{Stamp.Info} Exiting...")
+                            exit()
+                else:
+                    MakeTXT(SaveFileName=SaveFileName)
 
             print('\n')
             SaveResultsChoice = input(f"{Stamps.Stamp.Input} Save Results [y/n]: ")
@@ -663,7 +661,7 @@ class Main:
                 SaveFileNameHandling()
             else:
                 print('\n')
-                print(f"{Stamps.Stamp.Info} Exiting")
+                print(f"{Stamps.Stamp.Info} Exiting...")
                 exit()
 
 class UI:
@@ -708,7 +706,7 @@ class UI:
             self.Input()
 
 
-    def InternetConnection(self):
+    def InternetConnection(self) -> bool:
         try:
             requests.get('https://google.com')
             return True
@@ -730,4 +728,5 @@ class UI:
         os.system(self.ClearScreenCommand)
 
         Main(URL=URL)
+
 UI()
