@@ -20,7 +20,8 @@ class Main:
     def __init__(self, URL):
 
         self.WebTool = WebTools.WebTools()
-        self.Loading = Loading.Loading()
+        self.CheckingIfWebsiteWillBlockRequestLoading = Loading.Loading()
+        self.GettingRecordsLoading = Loading.Loading()
 
         self.Replace = []
         self.SubDomains = []
@@ -85,7 +86,7 @@ class Main:
             self.ClearScreenCommand = None
 
 
-        self.Loading.Spin(Text="Checking If Request Will Be Blocked")
+        self.CheckingIfWebsiteWillBlockRequestLoading.Spin(Text="Checking If Request Will Be Blocked")
         
         
         #Function Calls
@@ -110,16 +111,15 @@ class Main:
 
 
         if WebRequest.status_code == 403: # If cloudflare captcha is returned
-            self.Loading.Stop()
+            self.CheckingIfWebsiteWillBlockRequestLoading.Stop()
             os.system(self.ClearScreenCommand)
             print(f"{Stamp.Error} Request Blocked, Status code: {WebRequest.status_code}")
             exit()
 
 
-        self.Loading.Stop()
+        self.CheckingIfWebsiteWillBlockRequestLoading.Stop()
         os.system(self.ClearScreenCommand)
-        time.sleep(1)
-        self.Loading.Spin(Text="Getting Records")
+        self.GettingRecordsLoading.Spin(Text="Getting Records")
 
 
         IndexsForSoups = []
@@ -217,7 +217,10 @@ class Main:
                             NewLineIndex = Record.index(NewLine)
 
                             if NewLine == "MName:":
-                                Record = f"\n{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
+                                if iter == 0 or iter == 1:
+                                    Record = f"{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
+                                else:
+                                    Record = f"\n{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
                             else:
                                 Record = f"{Record[:NewLineIndex]}\n{Record[NewLineIndex:]}"
 
@@ -228,14 +231,14 @@ class Main:
                         
                     self.RecordsFiltered[RecordType].append(str(Record))
 
-            print(f"Len Of {RecordType}: {len(self.RecordsFiltered[RecordType])}")
-        print("_____________________________________")
+            print(f"Len Of {RecordType}: {len(self.RecordsFiltered[RecordType])}") # Debug String
+        print("_____________________________________") # Debug String
 
         self.Output()
 
     def Output(self):
 
-        self.Loading.Stop()
+        self.GettingRecordsLoading.Stop()
         #os.system(self.ClearScreenCommand) | Debug Uncomment
 
         LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
@@ -249,7 +252,8 @@ class Main:
         self.NS_LessThen6 = False
 
         for RecordType in self.RecordTypes:
-            print(f"Len Of {RecordType} Before Group Function: {RealLenDict[RecordType]}")
+            print(f"Len Of {RecordType} Before Group Function: {RealLenDict[RecordType]}") # Debug String
+            NS_RecordCount = 0
             if RecordType == "NS":
                 
                if RealLenDict["NS"] < 6:
@@ -262,14 +266,19 @@ class Main:
                         self.RecordsFiltered[RecordType].append(" ")
 
                else:
-                   GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 7, fillvalue=''))
-                   self.RecordsFiltered[RecordType] = GroupedList
+                   if NS_RecordCount == 0:
+                       GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 6, fillvalue=''))
+                       self.RecordsFiltered[RecordType] = GroupedList
+                       NS_RecordCount += 1
+                   else:
+                    GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 7, fillvalue=''))
+                    self.RecordsFiltered[RecordType] = GroupedList
 
             else:
-                for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
+                for _ in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
                     self.RecordsFiltered[RecordType] += [" "]
 
-            print(f"Len Of {RecordType} After Group Function: {RealLenDict[RecordType]}")
+            print(f"Len Of {RecordType} After Group Function: {RealLenDict[RecordType]}") # Debug String
 
         TermSize = os.get_terminal_size()
         TermWidth = TermSize.columns
