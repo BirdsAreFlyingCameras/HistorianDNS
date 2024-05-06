@@ -196,7 +196,6 @@ class Main:
         
         for RecordType in self.RecordTypes:
             self.RecordsToBeFiltered[RecordType] = re.split(DateRegex, ''.join(self.Records[RecordType]))
-            #self.RecordsToBeFiltered[RecordType] = list(dict.fromkeys(self.RecordsToBeFiltered[RecordType])) # Removes Dupes
 
         for RecordType in self.RecordTypes:
             for iter, Record in enumerate(self.RecordsToBeFiltered[RecordType]):
@@ -231,15 +230,12 @@ class Main:
                         
                     self.RecordsFiltered[RecordType].append(str(Record))
 
-            print(f"Len Of {RecordType}: {len(self.RecordsFiltered[RecordType])}") # Debug String
-        print("_____________________________________") # Debug String
-
         self.Output()
 
     def Output(self):
 
         self.GettingRecordsLoading.Stop()
-        #os.system(self.ClearScreenCommand) | Debug Uncomment
+        os.system(self.ClearScreenCommand)
 
         LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
 
@@ -251,9 +247,7 @@ class Main:
 
         self.NS_LessThen6 = False
 
-        for RecordType in self.RecordTypes:
-            print(f"Len Of {RecordType} Before Group Function: {RealLenDict[RecordType]}") # Debug String
-            NS_RecordCount = 0
+        for IterCount, RecordType in enumerate(self.RecordTypes):
             if RecordType == "NS":
                 
                if RealLenDict["NS"] < 6:
@@ -266,19 +260,16 @@ class Main:
                         self.RecordsFiltered[RecordType].append(" ")
 
                else:
-                   if NS_RecordCount == 0:
+                    if IterCount == 0:
                        GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 6, fillvalue=''))
                        self.RecordsFiltered[RecordType] = GroupedList
-                       NS_RecordCount += 1
-                   else:
-                    GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 7, fillvalue=''))
-                    self.RecordsFiltered[RecordType] = GroupedList
+                    else:
+                        GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 7, fillvalue=''))
+                        self.RecordsFiltered[RecordType] = GroupedList
 
             else:
                 for _ in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
                     self.RecordsFiltered[RecordType] += [" "]
-
-            print(f"Len Of {RecordType} After Group Function: {RealLenDict[RecordType]}") # Debug String
 
         TermSize = os.get_terminal_size()
         TermWidth = TermSize.columns
@@ -318,7 +309,6 @@ class Main:
 
             if len(SectionHeader1) > LeftColumnWidth:
                 Diff = len(SectionHeader1) - (LeftColumnWidth)
-                #print(f"Diff: {Diff}")
                 if Diff == 1:
                     SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides[:-1]}"
                 else:
@@ -327,7 +317,6 @@ class Main:
 
             if len(SectionHeader2) > RightColumnWidth:
                 Diff = len(SectionHeader2) - (RightColumnWidth)
-                #print(f"Diff: {Diff}")
                 if Diff == 1:
                     SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides[:-1]}"
                 else:
@@ -344,25 +333,15 @@ class Main:
             LenRecordType1 = RealLenDict[RecordType1]
             LenRecordType2 = RealLenDict[RecordType2]
 
-            print(LenRecordType1)
-            print(LenRecordType2)
-
             if LenRecordType1 < 100 and LenRecordType2 < 100:
                 DisplayRange = max(LenRecordType1, LenRecordType2)
             else:
                 DisplayRange = 100
 
             if LenRecordType1 == 0:
-                print("___________________________________") # Debug String
-                print(f"No {RecordType1} Records Found") # Debug String
                 self.RecordsFiltered[RecordType1].insert(0, f"No {RecordType1} Records Found")
-                print(self.RecordsFiltered[RecordType1]) # Debug String
             if LenRecordType2 == 0:
-                print("___________________________________") # Debug String
-                print(f"No {RecordType2} Records Found") # Debug String
                 self.RecordsFiltered[RecordType2].insert(0, f"No {RecordType2} Records Found")
-                print(self.RecordsFiltered[RecordType2]) # Debug String
-
 
 
             table.add_row('', '') # Table Padding
@@ -370,12 +349,8 @@ class Main:
 
             for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:DisplayRange], self.RecordsFiltered[RecordType2][:DisplayRange]):
 
-                print(RecordType1Item)# Debug String
-                print(RecordType2Item)# Debug String
-
                 if RecordType2 == "NS":
                     if self.NS_LessThen6 != True:
-                        #print(f"Record Type 2 Item: {RecordType2Item}")
                         RecordType2Item = '\n'.join(RecordType2Item)
                         table.add_row(RecordType1Item, RecordType2Item)
                     else:
@@ -384,11 +359,6 @@ class Main:
                     table.add_row(RecordType1Item, RecordType2Item)
 
             table.add_row('', '')
-
-
-            print("+++")
-            print(f"Len Of {RecordType1}: {RealLenDict[RecordType1]}")
-            print(f"Len Of {RecordType2}: {RealLenDict[RecordType2]}")
 
 
             if RealLenDict[RecordType1] > 100:
@@ -402,9 +372,7 @@ class Main:
                 RightRowText = ''
 
 
-            if LeftRowText != '' or RightRowText != '':
-                table.add_row(LeftRowText, RightRowText)
-            if LeftRowText != '' and RightRowText != '':
+            if LeftRowText != '' or RightRowText != '' or LeftRowText != '' and RightRowText != '':
                 table.add_row(LeftRowText, RightRowText)
 
             table.add_section() # Table Padding
@@ -678,8 +646,4 @@ class UI:
         os.system(self.ClearScreenCommand)
 
         Main(URL=URL)
-
-#Main(URL='google.com')
-#Main(URL='facebook.com')
-
 UI()
