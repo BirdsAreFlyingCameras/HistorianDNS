@@ -18,16 +18,15 @@ Stamp = Stamps.Stamp
 class Main:
 
     def __init__(self, URL):
-        self.SubDomains = []
-        self.Records = {'SOA':[], 'NS':[], 'MX':[], 'A':[],
-                        'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
 
         self.WebTool = WebTools.WebTools()
         self.Loading = Loading.Loading()
 
-        self.URL = URL
-
         self.Replace = []
+        self.SubDomains = []
+
+        self.Records = {'SOA':[], 'NS':[], 'MX':[], 'A':[],
+                        'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
 
         self.Tags = [
             "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi",
@@ -43,31 +42,33 @@ class Main:
             "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
             "wbr"
         ]
+
+        self.RecordTypes = ["SOA","NS","MX","A","AAAA","CNAME", "PTR", "TXT"]
+
         self.WebHeaders = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Referer": "https://www.google.com/",
-    "Connection": "keep-alive",
-    "DNT": "1",  # Do Not Track request header
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-User": "?1",
-    "Sec-Fetch-Dest": "document",
-    "Upgrade-Insecure-Requests": "1",
-    "Cache-Control": "max-age=0",
-    "Cookie": "NID=204=WqEzX3nYo...; 1P_JAR=2021-09-29-07; DV=oA4e8...;",
-    }
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-User": "?1",
+            "Sec-Fetch-Dest": "document",
+            "Cache-Control": "max-age=0",
+            "Sec-CH-UA": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"99\", \"Google Chrome\";v=\"99\"",
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": "\"Windows\"",
+            "Cookie": "sessionId=eyJpdiI6IklDVkZuQmFcL3NcLzN4Z1wvTmFcLzNnPT0iLCJ2YWx1ZSI6IlwvT1wvUnRQOHhcLzE2NGJcL1wvXC9cLzBcL1wvXC8wK3c9PSIsIm1hYyI6IjlkYzBmYWM1MjJlZjQ4MzI5YjFjNzg3MTQ0NjQ5ZDMwOTBiMjJhOWFjY2M2MzZiNTY5ZDgwN2E4YWE2NzE4YTEifQ%3D%3D; theme=light; csrftoken=ghPx4Dr56TjYVbnP5rSzG5hajkLQzN7b;"
+        }
 
-
-
+        self.URL = URL
 
         for Tag in self.Tags:
             self.Replace.append(f'<{Tag}>')
             self.Replace.append(f'</{Tag}>')
             self.Replace.append(f'<{Tag}/>')
-
 
         self.ClearScreenCommand = None
         if platform.system() == "Windows":
@@ -83,30 +84,42 @@ class Main:
             self.UserOS = "Unknown"
             self.ClearScreenCommand = None
 
-        self.Loading.Spin(Text="Getting Records")
+
+        self.Loading.Spin(Text="Checking If Request Will Be Blocked")
+        
+        
+        #Function Calls
+        
         self.GetBasePageRecords(URL=URL)
 
-
-        self.RecordTypes = ["SOA","NS","MX","A","AAAA","CNAME", "PTR", "TXT"]
         for RecordType in self.RecordTypes:
             self.GetHistory(URL=URL, Type=RecordType.lower())
 
         self.Filter()
 
+
     def grouper(self,sequence, n, fillvalue=None): # Coded by ChatGPT
         args = [iter(sequence)] * n
         return [list(group) for group in zip_longest(*args, fillvalue=fillvalue)]
+
 
     def GetBasePageRecords(self, URL):
 
         WebRequest = requests.get(f'https://dnshistory.org/dns-records/{URL}', headers=self.WebHeaders)
         WebRequestSoup = BeautifulSoup(WebRequest.text, 'html.parser')
 
-        if WebRequest.status_code == 403:
+
+        if WebRequest.status_code == 403: # If cloudflare captcha is returned
             self.Loading.Stop()
             os.system(self.ClearScreenCommand)
             print(f"{Stamp.Error} Request Blocked, Status code: {WebRequest.status_code}")
             exit()
+
+
+        self.Loading.Stop()
+        os.system(self.ClearScreenCommand)
+        time.sleep(1)
+        self.Loading.Spin(Text="Getting Records")
 
 
         IndexsForSoups = []
@@ -119,11 +132,12 @@ class Main:
 
         for Iter, Index in enumerate(IndexsForSoups):
 
-            if Iter+1 == len(IndexsForSoups):
+            if Iter+1 == len(IndexsForSoups): # Checks if current loop iteration is the last
                 break
             else:
                 NextIndex = IndexsForSoups[Iter+1]
                 ListForSoups.append(WebRequest.text[Index:NextIndex])
+
 
         DictGuide = {0:"SOA", 1:"NS", 2:"MX", 3:"A", 4:"AAAA", 5:"CNAME", 6:"PTR", 7:"TXT"}
 
@@ -153,7 +167,7 @@ class Main:
 
         for Iter, DataForIndex in enumerate(IndexsForRecords):
 
-            if Iter+1 == len(IndexsForRecords):
+            if Iter+1 == len(IndexsForRecords): # Checks if current loop iteration is the last
                 Index1 = Content.index(DataForIndex)
                 Index2 = Content[Index1:].index('</p>')
                 Index2 = int(Index1)+int(Index2)
@@ -169,6 +183,7 @@ class Main:
             self.Records[Type.upper()].append(TagPattern.sub('', str(Record).replace('\n', ' ')))
 
     def Filter(self):
+
         self.RecordsToBeFiltered = {'SOA':[], 'NS':[], 'MX':[], 'A':[],
                                     'AAAA':[], 'CNAME':[], 'PTR':[], 'TXT':[]}
 
@@ -177,20 +192,23 @@ class Main:
 
 
         DateRegex = re.compile("(?=\d{4}-\d{2}-\d{2}\s-&gt;\s\d{4}-\d{2}-\d{2})")
+        
+        
         for RecordType in self.RecordTypes:
             self.RecordsToBeFiltered[RecordType] = re.split(DateRegex, ''.join(self.Records[RecordType]))
-            self.RecordsToBeFiltered[RecordType] = list(dict.fromkeys(self.RecordsToBeFiltered[RecordType])) # Removes Dupes
+            #self.RecordsToBeFiltered[RecordType] = list(dict.fromkeys(self.RecordsToBeFiltered[RecordType])) # Removes Dupes
 
         for RecordType in self.RecordTypes:
             for iter, Record in enumerate(self.RecordsToBeFiltered[RecordType]):
-                if not Record == "":
+                
+                if Record != "":
                     Record = str(Record).replace('-&gt;', '⇒')
 
                     if RecordType == "SOA":
 
                         Record = Record.replace('&lt;', "").replace('&gt;', '')
 
-                        if iter == 0 or iter == 1:
+                        if iter == 0 or iter == 1: # The first SOA record doesn't have the RName field
                             NewLineList = ["MName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
                         else:
                             NewLineList = ["MName:", "RName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
@@ -207,69 +225,66 @@ class Main:
                         Index1 = Record.index('<')
                         Index2 = Record.rindex('>')
                         Record = f"{Record[:Index1]}{Record[Index2+1:]}"
-
+                        
                     self.RecordsFiltered[RecordType].append(str(Record))
+
+            print(f"Len Of {RecordType}: {len(self.RecordsFiltered[RecordType])}")
+        print("_____________________________________")
+
         self.Output()
 
     def Output(self):
+
         self.Loading.Stop()
-        os.system(self.ClearScreenCommand)
+        #os.system(self.ClearScreenCommand) | Debug Uncomment
 
         LongestList = max(self.RecordsFiltered['SOA'], self.RecordsFiltered['NS'], self.RecordsFiltered['MX'], self.RecordsFiltered['A'], self.RecordsFiltered['AAAA'], self.RecordsFiltered['CNAME'], self.RecordsFiltered['PTR'], self.RecordsFiltered['TXT'])
 
         RealLenDict = {
-            "SOA":len(list(set(self.RecordsFiltered['SOA']))), "NS":len(list(set(self.RecordsFiltered['NS']))), "MX":len(list(set(self.RecordsFiltered['MX']))),
-            "A":len(list(set(self.RecordsFiltered['A']))), "AAAA":len(list(set(self.RecordsFiltered['AAAA']))), "CNAME":len(list(set(self.RecordsFiltered['CNAME']))),
-            "PTR":len(list(set(self.RecordsFiltered['PTR']))), "TXT":len(list(set(self.RecordsFiltered['TXT'])))
+            "SOA":len(self.RecordsFiltered['SOA']), "NS":len(self.RecordsFiltered['NS']), "MX":len(self.RecordsFiltered['MX']),
+            "A":len(self.RecordsFiltered['A']), "AAAA":len(self.RecordsFiltered['AAAA']), "CNAME":len(self.RecordsFiltered['CNAME']),
+            "PTR":len(self.RecordsFiltered['PTR']), "TXT":len(self.RecordsFiltered['TXT'])
         }
 
         self.NS_LessThen6 = False
 
         for RecordType in self.RecordTypes:
-
+            print(f"Len Of {RecordType} Before Group Function: {RealLenDict[RecordType]}")
             if RecordType == "NS":
+                
                if RealLenDict["NS"] < 6:
+
                     self.NS_LessThen6 = True
                     self.RecordsFiltered[RecordType].append('\n'.join(self.RecordsFiltered[RecordType]))
                     self.RecordsFiltered[RecordType] = self.RecordsFiltered[RecordType][-1:]
 
-                    for i in range(len(LongestList) - RealLenDict["NS"]):
+                    for _ in range(len(LongestList) - RealLenDict["NS"]):
                         self.RecordsFiltered[RecordType].append(" ")
 
                else:
                    GroupedList = list(self.grouper(self.RecordsFiltered[RecordType], 7, fillvalue=''))
-                   #GroupedList[0].insert(0,"\n")
                    self.RecordsFiltered[RecordType] = GroupedList
-
 
             else:
                 for i in range(len(LongestList) - len(self.RecordsFiltered[RecordType])):
                     self.RecordsFiltered[RecordType] += [" "]
 
+            print(f"Len Of {RecordType} After Group Function: {RealLenDict[RecordType]}")
+
         TermSize = os.get_terminal_size()
-
-        TermHeight = TermSize.columns
-        TermWidth = TermSize.lines
-
-        print(self.RecordsFiltered)
-
-
-        RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
+        TermWidth = TermSize.columns
 
 
         table = Table()
         table.show_header = False
-        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=math.floor(TermHeight/2))
-        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=math.floor(TermHeight/2))
+        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=math.floor(TermWidth/2))
+        table.add_column(style="rgb(255,255,255)", no_wrap=True, width=math.floor(TermWidth/2))
         table.border_style = "rgb(255,255,255)"
         table.title_style = "bold"
 
-        for RecordType1, RecordType2 in RecordTupsForTables:
+        RecordTupsForTables = ('SOA','NS'),("A","AAAA"),("MX","CNAME"),("PTR","TXT")
 
-            #if RecordType2 == "NS":
-            #    self.RecordsFiltered[RecordType2].insert(0, '\n'.join(self.RecordsFiltered[RecordType2]))
-            #    self.RecordsFiltered[RecordType2] = self.RecordsFiltered[RecordType2][:-1]
-            #    print(self.RecordsFiltered[RecordType2])
+        for RecordType1, RecordType2 in RecordTupsForTables:
 
             Section1HeaderText = f'{RecordType1} Records'
             Section2HeaderText = f'{RecordType2} Records'
@@ -277,14 +292,14 @@ class Main:
             Section1HeaderTextLen = len(Section1HeaderText)
             Section2HeaderTextLen = len(Section2HeaderText)
 
-            LeftTableWidth = math.floor(TermHeight/2)
-            RightTableWidth = math.floor(TermHeight/2)
+            LeftColumnWidth = math.floor(TermWidth/2)
+            RightColumnWidth = math.floor(TermWidth/2)
 
-            LeftBufferInt = math.floor((LeftTableWidth-Section2HeaderTextLen)/2)
-            RightBufferInt = math.floor((RightTableWidth-Section1HeaderTextLen)/2)
+            SectionHeader1BufferInt = math.floor((LeftColumnWidth-Section2HeaderTextLen)/2)
+            SectionHeader2BufferInt = math.floor((RightColumnWidth-Section1HeaderTextLen)/2)
 
-            Section1HeaderSides = '═' * (LeftBufferInt-4)
-            Section2HeaderSides = '═' * (RightBufferInt-4)
+            Section1HeaderSides = '═' * (SectionHeader1BufferInt-4) # Need to adjust
+            Section2HeaderSides = '═' * (SectionHeader2BufferInt-4) # Need to adjust 
 
             SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides}"
             SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides}"
@@ -292,8 +307,8 @@ class Main:
 
             # ||| Start of code I will probably remove |||
 
-            if len(SectionHeader1) > LeftTableWidth:
-                Diff = len(SectionHeader1) - (LeftTableWidth)
+            if len(SectionHeader1) > LeftColumnWidth:
+                Diff = len(SectionHeader1) - (LeftColumnWidth)
                 #print(f"Diff: {Diff}")
                 if Diff == 1:
                     SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides[:-1]}"
@@ -301,9 +316,8 @@ class Main:
                     Section1HeaderSides = Section1HeaderSides[:-int(Diff/2)]
                     SectionHeader1 = f"{Section1HeaderSides} {Section1HeaderText} {Section1HeaderSides}"
 
-
-            if len(SectionHeader2) > RightTableWidth:
-                Diff = len(SectionHeader2) - (RightTableWidth)
+            if len(SectionHeader2) > RightColumnWidth:
+                Diff = len(SectionHeader2) - (RightColumnWidth)
                 #print(f"Diff: {Diff}")
                 if Diff == 1:
                     SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides[:-1]}"
@@ -311,8 +325,8 @@ class Main:
                     Section2HeaderSides = Section2HeaderSides[:-int(Diff/2)]
                     SectionHeader2 = f"{Section2HeaderSides} {Section2HeaderText} {Section2HeaderSides}"
 
-
             # ||| End of code I will probably remove |||
+
 
             table.add_row(Align(SectionHeader1, align="center"), Align(SectionHeader2, align="center"))
             table.add_section()
@@ -330,32 +344,43 @@ class Main:
                 DisplayRange = 100
 
             if LenRecordType1 == 0:
+                print("___________________________________") # Debug String
+                print(f"No {RecordType1} Records Found") # Debug String
                 self.RecordsFiltered[RecordType1].insert(0, f"No {RecordType1} Records Found")
+                print(self.RecordsFiltered[RecordType1]) # Debug String
             if LenRecordType2 == 0:
+                print("___________________________________") # Debug String
+                print(f"No {RecordType2} Records Found") # Debug String
                 self.RecordsFiltered[RecordType2].insert(0, f"No {RecordType2} Records Found")
+                print(self.RecordsFiltered[RecordType2]) # Debug String
 
-            table.add_row('', '')
 
-            if RecordType2 == "NS":
-                pass
-                #print(f"NS Records Dict: {self.RecordsFiltered[RecordType2]}")
+
+            table.add_row('', '') # Table Padding
+
 
             for RecordType1Item, RecordType2Item in zip(self.RecordsFiltered[RecordType1][:DisplayRange], self.RecordsFiltered[RecordType2][:DisplayRange]):
 
+                print(RecordType1Item)# Debug String
+                print(RecordType2Item)# Debug String
+
                 if RecordType2 == "NS":
-                    if not self.NS_LessThen6 == True:
+                    if self.NS_LessThen6 != True:
                         #print(f"Record Type 2 Item: {RecordType2Item}")
                         RecordType2Item = '\n'.join(RecordType2Item)
                         table.add_row(RecordType1Item, RecordType2Item)
                     else:
                         table.add_row(RecordType1Item, RecordType2Item)
-
-
-
                 else:
                     table.add_row(RecordType1Item, RecordType2Item)
 
             table.add_row('', '')
+
+
+            print("+++")
+            print(f"Len Of {RecordType1}: {RealLenDict[RecordType1]}")
+            print(f"Len Of {RecordType2}: {RealLenDict[RecordType2]}")
+
 
             if RealLenDict[RecordType1] > 100:
                 LeftRowText = f"There are {RealLenDict[RecordType1] - DisplayRange} More {RecordType1} records."
@@ -368,11 +393,11 @@ class Main:
                 RightRowText = ''
 
 
-            if not LeftRowText == '' and RightRowText == '':
+            if  LeftRowText != '' and RightRowText != '':
                 table.add_row(LeftRowText, RightRowText)
 
 
-            table.add_section()
+            table.add_section() # Table Padding
 
         console = Console()
         console.print(table)
