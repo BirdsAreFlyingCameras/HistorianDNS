@@ -13,13 +13,14 @@ The last main branch release was beta 0.2.2 released on 11/02/2023 since then a 
 - New txt output format
 - Fixed bugs relating to file names
 
+
 ## Installation 
 
 In the terminal of your choice:
 
 Install files from GitHub:
 
-    git clone https://github.com/BirdsAreFlyingCameras/HistorianDNS/tree/main
+    git clone https://github.com/BirdsAreFlyingCameras/HistorianDNS
 
 Travel to the path of installation:
 
