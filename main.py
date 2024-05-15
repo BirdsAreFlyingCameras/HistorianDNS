@@ -277,10 +277,7 @@ class Main:
 
                         Record = Record.replace('&lt;', "").replace('&gt;', '')
 
-                        if IterCount == 0 or IterCount == 1: # The first SOA record doesn't have the RName field
-                            NewLineList = ["MName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
-                        else:
-                            NewLineList = ["MName:", "RName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
+                        NewLineList = ["MName:", "Serial:", "Refresh:", "Retry:", "Expire:"]
 
                         for NewLine in NewLineList:
                             NewLineIndex = Record.index(NewLine)
@@ -453,149 +450,51 @@ class Main:
 
             def MakeTXT(SaveFileName:str):
 
-                BannerNameForTXT = SaveFileName.replace(".txt", "")
+                RecordTypeList = [
+                    "SOA",
+                    "NS",
+                    "MX",
+                    "A",
+                    "AAAA",
+                    "CNAME",
+                    "PTR",
+                    "TXT"
+                ]
 
+                BannerNameForTXT = self.URL
+
+                TableForTXT = Table()
+
+                TableForTXT.show_header = False
+
+                TableForTXT.add_section()
+
+                TableForTXT.add_row(Align(f"Historian DNS Results For {BannerNameForTXT}", align="center"))
+
+                TableForTXT.add_section()
+
+                for RecordType in RecordTypeList:
+
+                    if RecordType != "SOA":
+                        TableForTXT.add_section()
+
+                    TableForTXT.add_row(Align(f'{RecordType} Records', align="center"))
+
+                    TableForTXT.add_section()
+
+                    if RecordType != "NS":
+                        for Record in self.RecordsFiltered[RecordType]:
+                            TableForTXT.add_row(f"{Record}")
+                    else:
+                        for RecordsList in self.RecordsFiltered[RecordType]:
+                            for Record in RecordsList:
+                                TableForTXT.add_row(f"{Record}")
+
+
+                from rich import print as rprint
                 with open(SaveFileName, 'x', encoding='utf-8') as f:
+                    rprint(TableForTXT, file=f)
 
-                    f.write(f"┣━━━━━━━━━━ HistorianDNS Results for {BannerNameForTXT} ━━━━━━━━━━┫")
-
-                    f.write('\n')
-                    f.write('\n')
-                    f.write('\n')
-
-                    f.write('━━━━━┫ SOA Records ┣━━━━━')
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    if self.RecordsFiltered.get('SOA') != 0:
-                        for SOA in self.RecordsFiltered.get('SOA'):
-                            if SOA != " ":
-                                f.write(SOA)
-                                f.write('\n')
-                    else:
-                        f.write("No SOA Records Found")
-
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    f.write('━━━━━┫ NS Records ┣━━━━━')
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    if self.RecordsFiltered.get('NS') != 0:
-                        for NS in self.RecordsFiltered.get('NS'):
-                            if NS != " ":
-                                f.write(SOA)
-                                f.write('\n')
-
-                    else:
-                        f.write("No NS Records Found")
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    f.write('━━━━━┫ A Records ┣━━━━━')
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    if self.RecordsFiltered.get('A') != 0:
-                        for A in self.RecordsFiltered.get('A'):
-                            if A != " ":
-                                f.write(A)
-                                f.write('\n')
-                    else:
-                        f.write("No A Records Found")
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    f.write('━━━━━┫ AAAA Records ┣━━━━━')
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    if self.RecordsFiltered.get('AAAA') != 0:
-                        for AAAA in self.RecordsFiltered.get('AAAA'):
-                            if AAAA != " ":
-                                f.write(AAAA)
-                                f.write('\n')
-
-                    else:
-                        f.write("No AAAA Records Found")
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    f.write('━━━━━┫ MX Records ┣━━━━━')
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    if self.RecordsFiltered.get('MX') != 0:
-                        for MX in self.RecordsFiltered.get('MX'):
-                            if MX != " ":
-                                f.write(MX)
-                                f.write('\n')
-
-                    else:
-                        f.write("No MX Records Found")
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    f.write('━━━━━┫ CNAME Records ┣━━━━━')
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    if self.RecordsFiltered.get('CNAME') != 0:
-                        for CNAME in self.RecordsFiltered.get('CNAME'):
-                            if CNAME != " ":
-                                f.write(CNAME)
-                                f.write('\n')
-
-                    else:
-                        f.write("No CNAME Records Found")
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    f.write('━━━━━┫ PTR Records ┣━━━━━')
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    if self.RecordsFiltered.get('PTR') != 0:
-                        for PTR in self.RecordsFiltered.get('PTR'):
-                            if PTR != " ":
-                                f.write(PTR)
-                                f.write('\n')
-
-                    else:
-                        f.write("No PTR Records Found")
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    f.write('━━━━━┫ TXT Records ┣━━━━━')
-
-                    f.write('\n')
-                    f.write('\n')
-
-                    if self.RecordsFiltered.get('TXT') != 0:
-                        for TXT in self.RecordsFiltered.get('TXT'):
-                            if TXT != " ":
-                                f.write(TXT)
-                                f.write('\n')
-
-                    else:
-                        f.write("No TXT Records Found")
-
-                    f.write('\n')
 
                 if self.UserOS == "Linux" or self.UserOS == "MacOS" or self.UserOS == "Unknown":
                     print('\n')
@@ -607,8 +506,10 @@ class Main:
                     print(f"{Stamps.Stamp.Output} Saved Results to {os.path.dirname(os.path.abspath(__file__))}\\{SaveFileName}")
                     print('\n')
                     print(f"{Stamps.Stamp.Info} Exiting")
+
+
             def SaveFileNameHandling():
-                SaveFileName = f"HistorianDNS-{self.URL}.txt"
+                SaveFileName = f"HistorianDNS-{str(self.URL)[:str(self.URL).rindex('.')]}.txt"
 
                 if os.path.exists(SaveFileName):
                     print("\n")
