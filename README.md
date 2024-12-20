@@ -4,7 +4,7 @@
 
 ### Version Number: Rewrite Beta 1.1
 
-HistorianDNS is a script retrieves parses displays historical and current DNS records from dnshistory.com with the option of saving the results in a .txt format.
+HistorianDNS is a script retrieves parses displays historical and current DNS records from dnshistory.org with the option of saving the results in a .txt format.
 
 The last main branch release of the original code was beta 0.2.2 released on 11/02/2023 since then a full rewrite happened starting on 03/30/2024 with rewrite beta 1.0 being released on 05/06/2024.
 
