@@ -46,4 +46,5 @@ To use the script run:
 ## Todo
 
 - Add CLI arguments so use of the UI is not mandatory
-- Add .csv as a save file format 
+- Add .csv as a save file format
+- Add subdomain history parsing
